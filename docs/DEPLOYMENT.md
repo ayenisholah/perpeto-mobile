@@ -1,5 +1,7 @@
 # iOS TestFlight Delivery
 
+This file documents the current iOS delivery path. The M4 passkey and live-trading requirements below are target work and are not present in today's store build.
+
 Perpeto uses EAS project `@ayenisholah/signex-mobile`, Apple bundle identifier `com.signex.mobile`, and App Store Connect app `6790819875`. The `testflight` EAS profile builds only iOS and submits the archive to TestFlight. Android delivery is outside this slice.
 
 Never paste an Apple `.p8` key, OAuth client secret, Expo token, Apple password, two-factor code, certificate private key, or provisioning profile into an issue, pull request, source file, terminal argument, or chat. Client IDs and the reversed Google URL scheme are public identifiers; private keys and client secrets are server or provider credentials.
@@ -131,4 +133,12 @@ The generated iOS Podfile marks `GoogleUtilities` and `RecaptchaInterop` as modu
 
 ## Backend readiness boundary
 
-The Google and Apple verification adapters, token exchange, session handlers, and staging authentication endpoints are not implemented yet. The mobile archive can build and reach TestFlight after provider configuration, but end-to-end social authentication cannot pass until the backend runtime stores its provider secrets and exposes the documented authentication API. A successful archive is delivery evidence only, not M1A authentication certification.
+The Google and Apple verification adapters, token exchange, session handlers, and staging authentication endpoints are implemented, but end-to-end social authentication still requires valid provider configuration and recorded device evidence. A successful archive is delivery evidence only, not authentication or live-trading certification.
+
+## M4 public-app and passkey target
+
+Production builds bind to the shared public Perpeto API and its WebAuthn relying-party identity. The associated domain/app-site-association configuration, Android Digital Asset Links, bundle/package identifiers and backend RP ID/origin allowlist must agree exactly. Staging and production use distinct relying parties so a staging passkey cannot authorize production.
+
+Passkey private material remains in the operating-system credential provider. Exchange credentials are entered only into an ephemeral enrollment form, excluded from analytics/crash capture/screenshots/clipboard, submitted over TLS to a one-use operation and cleared on background, timeout, cancellation or completion. No EAS secret, Expo environment value, Secure Store item or app cache contains a CEX key or secret.
+
+App-store readiness for live controls requires the M4 backend contract, forced tenant isolation, Vault enrollment, account preflight and passkey verification to be deployed and tested. The app must hide or fail closed on live controls when the API/client contract is incompatible, Vault is sealed, the account is ineligible, or a fresh passkey proof is absent. Store approval or TestFlight delivery alone is never live-trading evidence.

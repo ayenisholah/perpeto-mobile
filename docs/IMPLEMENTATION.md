@@ -2,18 +2,25 @@
 
 ## Current objective
 
-Establish an accessible Expo SDK 57 shell that validates the paper backend contract without implying that trading controls exist.
+Keep the existing M2 monitoring and M3 connector-observability surfaces paper/shadow-safe. After backend M4 tenant, passkey and Vault contracts land, implement consumer credential enrollment and limited-live controls in small contract-pinned slices.
 
-## Ordered implementation
+## M4 ordered slices
 
-1. Theme/accessibility primitives, typed API client, auth/session lifecycle, MFA, secure storage, and onboarding.
-2. Home, scanner, opportunity detail, paper entry confirmation, execution timeline, positions, and freshness/offline behavior.
-3. Strategy wizard, portfolio, rebalancing approvals, analytics, activity, exchange health, alerts, audit, and settings.
-4. Push deep links, biometric unlock, certificate-pin rotation, screenshot/privacy controls, crash redaction, E2E and accessibility evidence.
-5. Internal distribution hardening and controlled release compatibility.
+1. **Personal tenant session:** consume session-derived tenant status and paper/live eligibility without accepting or storing a selectable tenant ID.
+2. **Passkey lifecycle:** register/list/revoke platform passkeys with native iOS/Android credential APIs; handle RP/origin errors, cancellation, lost-device recovery and remote session revocation.
+3. **Secure enrollment UX:** collect CEX API key/secret/passphrase in ephemeral, non-persisted fields; suppress analytics, screenshots and crash breadcrumbs; bind submission to a one-use passkey-authorized operation and clear on every exit path.
+4. **Account preflight:** display permissions, account/margin mode, connection/private-stream health, reconciliation and shadow results. Explain why read/trade-only credentials with withdrawals/transfers/admin disabled are mandatory.
+5. **Live arming:** show platform connector certification separately from personal account eligibility; require fresh passkey and typed `ENABLE LIVE`; display exact tenant/account/routes/limits being armed.
+6. **Live monitoring and containment:** show tenant/global breaker badges, stale/private-stream/Vault status, disarm, pause, close and flatten actions with server-confirmed outcomes and in-flight recovery.
+7. **Credential lifecycle:** passkey-authorized rotation/revocation, sequencing warnings for open positions, exchange-side revoke guidance and deletion/recovery states. Never offer secret reveal/export.
+8. **Store evidence:** real iOS/Android tests for passkeys, background/offline automation visibility, push deep links, accessibility, privacy shield, enrollment cleanup and fail-closed contract behavior.
 
-Every mutation requires a current server preview, idempotency key, expected resource version, authorization, freshness, and explicit pending/recovery UI.
+## Boundary rules
+
+The phone authorizes but does not execute unattended strategies and does not hold the backend decryption root. Closing the app must not stop an armed server strategy. Local biometrics may unlock the app, but only a server-verified platform passkey assertion satisfies M4 credential/live step-up.
+
+Generated API types remain authoritative; decimal math remains display-only. Live actions are unavailable offline, on stale state, with an incompatible client, or without server eligibility. The UI never interprets platform connector certification as proof that the trader's account is ready.
 
 ## Deferred
 
-Production EAS channels, store submission, live-mode controls, and arbitrary external-wallet signing remain unavailable.
+Team/shared tenants, copy trading, automatic CEX transfers/withdrawals and arbitrary external-wallet signing remain unavailable. DEX signer approval UI moves to M5. Broader production rollout follows M6 hardening in M7.

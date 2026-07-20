@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- Milestone: M3 — CEX integrations
+- Milestone: M3 — CEX connector certification
 - Overall state: In progress (mobile monitoring implemented)
 - Last verified: 2026-07-20
 
@@ -26,6 +26,7 @@
 - Real-device, accessibility, and security certification evidence is still pending.
 - The versioned backend client package is consumed from a checked-in deterministic tarball but is not yet published to GitHub Packages.
 - No M1A real-device, accessibility, or security certification evidence exists.
+- M4 personal-tenant status, native platform passkeys, ephemeral exchange-credential enrollment, per-account preflight/live eligibility and production live controls are not implemented. The accepted backend secret target is per-tenant Vault Transit; the phone will authorize changes but will not store or decrypt enrolled credentials.
 
 ## Blockers
 
@@ -37,3 +38,5 @@
 ## Next verified task
 
 Import least-privilege server-side test credentials, run the M3 sandbox/shadow certification matrix, and verify the Exchanges monitoring path on a real device.
+
+After M3 closes and the backend publishes the first M4 tenant/passkey contract, implement the personal-tenant session slice. Do not add credential fields before the one-use, passkey-authorized Vault enrollment contract exists.

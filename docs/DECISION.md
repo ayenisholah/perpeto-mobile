@@ -81,3 +81,19 @@ Accepted entries are append-only. Supersede an earlier decision with a new ID in
 - Scope: Shared
 - Decision: M2 Slice 5a uses the existing effective unmatched-exposure limit (`RiskLimits::max_unmatched()`) and two consecutive scenario ticks to trigger corrective paper re-hedging. The engine separates real scan sleep from a configurable simulated-time step so the four-snapshot `t0→t3` path is exercised deterministically.
 - Consequences: This is a paper-fixture simplification for repeatable milestone evidence, not the live risk policy. The PRODUCT_SPEC §6.2 greater-of-USD-100/5-bps threshold with three seconds of elapsed persistence must be implemented before live execution and cannot be inferred from the tick counter.
+
+## DEC-0011 — M3 sandbox writes and read-only shadow boundary
+
+- Status: Accepted
+- Date: 2026-07-20
+- Scope: Backend
+- Decision: M3 introduces `SANDBOX` and `SHADOW` runtime modes. Only `SANDBOX` may submit external orders, and only to a connector account explicitly configured for a non-production testnet/demo environment. `SHADOW` may consume production public/private reads but routes every execution decision to a non-submitting recorder. `LIVE` remains fail-closed until M6. CEX credentials enter the shared v1 deployment only through an audited server-side administration CLI because DEC-0009 does not provide the step-up proof required for credential mutations.
+- Consequences: Environment/mode mismatches are fatal configuration errors. Mobile and HTTP APIs never accept raw CEX credentials in v1. M3 can advance routes through `PAPER_ONLY` and `SHADOW`; `PILOT` and `CERTIFIED_LIVE` require M6 authorization and evidence.
+
+## DEC-0012 — Shared-VPS personal tenants and passkey-authorized Vault credentials
+
+- Status: Accepted
+- Date: 2026-07-20
+- Scope: Shared
+- Decision: Operate one Perpeto control plane on the operator's VPS for many independent consumer traders. Every trader receives one personal tenant; teams and shared portfolios are deferred. PostgreSQL row-level security, tenant-scoped repositories, tenant-aware unique constraints and tenant-bound authorization isolate private state in the shared database. Each trader supplies CEX read-and-trade credentials with withdrawal, transfer and API-administration permissions disabled. HashiCorp Vault Transit encrypts those credentials with a distinct key per tenant and is manually unsealed after restart using a 2-of-3 Shamir quorum. A registered device passkey authorizes credential enrollment, rotation, revocation and live arming, but does not derive or persist the server's encryption key: authorized automation must continue while the phone is offline. Connector routes are certified once at platform level; each connected account must separately pass permission, account-mode, reconciliation and shadow preflight before limited live entry.
+- Consequences: This decision supersedes DEC-0009's universal privileged-role open-registration model and the CLI-only credential-entry constraint in DEC-0011. Registration may remain public for paper use, but live eligibility is per tenant and fail-closed. The API derives tenant identity from the authenticated session rather than accepting an arbitrary tenant header. API and engine identities receive narrow Vault policies; Vault root and unseal shares never enter application configuration. A sealed or unavailable Vault halts new live risk and credential changes while reconciliation and safe risk-reduction continue where already established sessions permit. The first production profile accepts a single-VPS and manual-unseal availability boundary; Vault HA, managed KMS auto-unseal, static exchange egress and stronger infrastructure isolation are explicit M6 work. Until M4 isolation and secret-lifecycle gates pass, production CEX writes remain disabled.

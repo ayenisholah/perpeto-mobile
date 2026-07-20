@@ -4,6 +4,10 @@
 
 ### Added
 
+- Accepted and documented the M4 public multi-user app architecture: one personal tenant per trader, native passkey authorization, ephemeral CEX credential enrollment into backend per-tenant Vault Transit, account preflight/live eligibility, and fail-closed limited-live controls. Added canonical `ARCHITECTURE.md` and `KEY_MANAGEMENT.md`; no live capability or credential form is implemented by this docs change.
+
+- Re-sequenced the roadmap to M3 connector certification, M4 shared-VPS multi-user CEX live, M5 DEX, M6 hardening and M7 broader rollout. Documented that the phone authorizes sensitive operations but does not retain exchange credentials or supply the unattended runtime's decryption key.
+
 - M3 Slice 19 — the Exchanges tab now shows exact connector order history, reconciliation status/discrepancy counts, and the latest reconciled balances and venue positions using vendored API client **0.13.0**. Decimal values remain strings and no credential material reaches mobile.
 
 - M3 Slice 18 — the Exchanges tab now previews exact native IOC quantity, equivalent base exposure, projected delta, and payload hash via client **0.12.0**. Non-production accounts support an explicit confirmation before submit; production accounts render SHADOW preview-only status and cannot submit.
@@ -37,7 +41,7 @@
 - Updated repository and milestone status to reflect complete M2 mobile monitoring, the client 0.13 connector surfaces, and the remaining M3 WebSocket/certification gates.
 
 - Rebranded the app from **Signex** to **Perpeto** ("The perpetual edge"): a new perpetual-loop mark (interlocking mint/sky ribbon) for the icon, adaptive icon, splash and wordmark; the "Quant Terminal" palette (near-black ink `#0A0C10`, mint accent `#34E0A1`, sky secondary `#38BDF8`); and updated user-facing copy. Brand assets are generated from `assets/brand/perpeto-*.svg` via `npm run brand:render`. The vendored contract package is renamed to `@ayenisholah/perpeto-api-client` (client class `PerpetoClient`). The `com.signex.mobile` bundle ID, `signex://` deep-link scheme, `signex-mobile` slug, EAS linkage, and `signex.auth.*` secure-store keys are intentionally preserved so no re-provisioning or forced sign-out occurs.
-- Updated the sign-in copy for the shared v1 open-registration backend (DEC-0009): new accounts get full access immediately, so the screen no longer promises Owner approval. The pending-approval screen and auth state machine remain as the fallback for gated (v2/isolated) deployments.
+- Updated the sign-in copy for the shared v1 open-registration backend (DEC-0009): new accounts currently get full access immediately. DEC-0012 now supersedes that model for M4; the target grants a personal paper tenant and requires separate passkey/account eligibility for live use.
 - Replaced the vendor Apple and Google sign-in widgets with a shared `ProviderButton` that renders both as identical 52pt pills (SF Symbol Apple glyph, official multicolor Google mark) following each provider's brand guidelines, resolving the mismatched styling on the sign-in screen. The underlying `expo-apple-authentication` and Google native sign-in flows are unchanged.
 - Moved project-control documentation under `docs/` and recorded the temporary solo-maintainer administrator bypass policy.
 - Updated API client automation to record dependency releases so generated pull requests satisfy the documentation impact gate.
