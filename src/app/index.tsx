@@ -22,6 +22,7 @@ import type {
   ConnectorOrder,
   ConnectorOrderPreview,
   ConnectorOrderRequest,
+  DecimalString,
   LinkedIdentity,
   Opportunity,
   OpportunityFilter,
@@ -343,12 +344,41 @@ function SecurityCenter() {
   );
 }
 
-function formatPercent(value: number): string {
-  return `${(value * 100).toFixed(2)}%`;
+function displayDecimal(value: DecimalString): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatUsd(value: number): string {
-  return `$${Math.round(value).toLocaleString("en-US")}`;
+function formatPercent(value: DecimalString): string {
+  return `${(displayDecimal(value) * 100).toFixed(2)}%`;
+}
+
+function formatUsd(value: DecimalString): string {
+  return `$${Math.round(displayDecimal(value)).toLocaleString("en-US")}`;
+}
+
+function formatDecimal(value: DecimalString, fractionDigits: number): string {
+  return displayDecimal(value).toFixed(fractionDigits);
+}
+
+function halfDecimal(value: DecimalString): DecimalString {
+  const negative = value.startsWith("-");
+  const unsigned = negative ? value.slice(1) : value;
+  const [whole, fraction = ""] = unsigned.split(".");
+  const scale = 10n ** BigInt(fraction.length);
+  let units = BigInt(whole) * scale + BigInt(fraction || "0");
+  let outputScale = fraction.length;
+  if (units % 2n !== 0n) {
+    units *= 5n;
+    outputScale += 1;
+  } else {
+    units /= 2n;
+  }
+  const digits = units.toString().padStart(outputScale + 1, "0");
+  const result = outputScale === 0
+    ? digits
+    : `${digits.slice(0, -outputScale)}.${digits.slice(-outputScale)}`.replace(/\.?0+$/, "");
+  return negative && result !== "0" ? `-${result}` : result;
 }
 
 function formatClock(iso: string): string {
@@ -459,7 +489,7 @@ function Pill({ label, active, onPress }: { readonly label: string; readonly act
 
 function OpportunityRow({ opportunity, onPress }: { readonly opportunity: Opportunity; readonly onPress: () => void }) {
   const theme = useColorScheme() === "light" ? themes.light : themes.dark;
-  const positive = opportunity.net_apr >= 0;
+  const positive = displayDecimal(opportunity.net_apr) >= 0;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.oppRow, { borderColor: theme.border, opacity: pressed ? 0.6 : 1 }]}>
       <View style={styles.oppTop}>
@@ -544,8 +574,8 @@ function OpportunityDetail({
             <DetailLine label="Risk buffer" value={formatPercent(opportunity.risk_buffer)} />
             <DetailLine label="Profitability" value={formatPercent(opportunity.profitability_probability)} />
             <DetailLine label="Expected net PnL" value={formatUsd(opportunity.expected_net_pnl)} />
-            <DetailLine label="Entry basis" value={`${opportunity.entry_basis_bps.toFixed(1)} bps`} />
-            <DetailLine label="Leverage" value={`${opportunity.leverage.toFixed(1)}×`} />
+            <DetailLine label="Entry basis" value={`${formatDecimal(opportunity.entry_basis_bps, 1)} bps`} />
+            <DetailLine label="Leverage" value={`${formatDecimal(opportunity.leverage, 1)}×`} />
             <DetailLine label="Required capital" value={formatUsd(opportunity.required_capital)} />
             <DetailLine label="Available capacity" value={formatUsd(opportunity.available_capacity)} />
             <DetailLine label="Reserved notional" value={formatUsd(opportunity.reserved_notional)} />
@@ -580,8 +610,8 @@ function RiskLimitsCard({ limits }: { readonly limits: RiskLimits }) {
       <View style={styles.oppMetrics}>
         <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Min APR {formatPercent(limits.min_net_apr)}</Text>
         <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Min win {formatPercent(limits.min_profitability)}</Text>
-        <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Max lev {limits.max_leverage.toFixed(1)}×</Text>
-        <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Max basis {limits.max_entry_basis_bps.toFixed(0)} bps</Text>
+        <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Max lev {formatDecimal(limits.max_leverage, 1)}×</Text>
+        <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Max basis {formatDecimal(limits.max_entry_basis_bps, 0)} bps</Text>
         <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Max/opp {formatPercent(limits.max_opportunity_fraction)}</Text>
       </View>
     </Card>
@@ -744,7 +774,7 @@ function PositionCard({
       {open ? null : (
         <View style={styles.oppMetrics}>
           <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Funding {formatUsd(position.funding_captured)}</Text>
-          <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: position.realized_pnl >= 0 ? theme.signal : theme.critical }]}>PnL {formatUsd(position.realized_pnl)}</Text>
+          <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: displayDecimal(position.realized_pnl) >= 0 ? theme.signal : theme.critical }]}>PnL {formatUsd(position.realized_pnl)}</Text>
           {position.exit_reason === null ? null : (
             <Text maxFontSizeMultiplier={2} style={[styles.oppMetric, { color: theme.textSecondary }]}>Exit {exitReasonLabel(position.exit_reason)}</Text>
           )}
@@ -899,16 +929,16 @@ function Strategies() {
   const refresh = useCallback(() => void controller.client.listStrategies().then(setStrategies).catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Could not load strategies.")), [controller]);
   useEffect(() => queueMicrotask(refresh), [refresh]);
   const create = async () => {
-    const threshold = Number(minApr);
-    if (!Number.isFinite(threshold)) { setError("Enter a valid APR threshold."); return; }
+    const threshold = minApr.trim();
+    if (!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(threshold) || !Number.isFinite(Number(threshold))) { setError("Enter a valid APR threshold."); return; }
     const strategy: Strategy = {
       id: "00000000-0000-0000-0000-000000000000", name, enabled: false,
       current: {
         version: 1, creator: "server", created_at: new Date().toISOString(), mode: "PAPER",
         route_types: ["PERP_PERP"], allowed_venues: ["BINANCE", "BYBIT", "OKX"], allowed_assets: ["BTC", "ETH"],
-        min_net_apr: threshold, min_profitability: 0.65, min_forecast_coverage: 0.65, max_time_to_funding_minutes: 480, max_basis_bps: 80,
-        allocation: { method: "FIXED", value: 1000 }, max_concurrent: 2, cooldown_seconds: 14400, hold_seconds: 1209600,
-        auto_compound: { enabled: false, reinvest_fraction: 0.5, minimum_reinvest_amount: 25 }, exit_net_apr: threshold / 2, max_drawdown_fraction: 0.03,
+        min_net_apr: threshold, min_profitability: "0.65", min_forecast_coverage: "0.65", max_time_to_funding_minutes: 480, max_basis_bps: "80",
+        allocation: { method: "FIXED", value: "1000" }, max_concurrent: 2, cooldown_seconds: 14400, hold_seconds: 1209600,
+        auto_compound: { enabled: false, reinvest_fraction: "0.5", minimum_reinvest_amount: "25" }, exit_net_apr: halfDecimal(threshold), max_drawdown_fraction: "0.03",
       },
     };
     try { await controller.client.createStrategy(strategy); refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create strategy."); }
@@ -928,7 +958,7 @@ function Strategies() {
     {error === undefined ? null : <Text accessibilityRole="alert" style={{ color: theme.critical }}>{error}</Text>}
     {strategies.map((strategy) => <Card key={strategy.id}>
       <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>{strategy.name}</Text>
-      <Text style={{ color: theme.textSecondary }}>v{strategy.current.version} · {strategy.enabled ? "Enabled" : "Paused"} · APR ≥ {(strategy.current.min_net_apr * 100).toFixed(1)}%</Text>
+      <Text style={{ color: theme.textSecondary }}>v{strategy.current.version} · {strategy.enabled ? "Enabled" : "Paused"} · APR ≥ {formatPercent(strategy.current.min_net_apr)}</Text>
       <Text style={{ color: theme.textSecondary }}>{strategy.current.allocation.method} · max {strategy.current.max_concurrent} positions</Text>
       {canTrade ? <Button label={strategy.enabled ? "Disable" : "Enable"} onPress={() => void toggle(strategy)} /> : null}
     </Card>)}
@@ -943,9 +973,9 @@ function PortfolioDashboard() {
   return <><Heading title="Portfolio" body="Paper equity, allocation, and PnL from positions, fills, fees, and captured funding." />
     {error === undefined ? null : <Text accessibilityRole="alert" style={{ color: theme.critical }}>{error}</Text>}
     {portfolio === undefined ? <ActivityIndicator /> : <>
-      <Card><Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>${portfolio.equity.toFixed(2)} equity</Text><Text style={{ color: theme.textSecondary }}>${portfolio.deployable_equity.toFixed(2)} deployable · ${portfolio.deployed_capital.toFixed(2)} deployed</Text></Card>
-      <Card><Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>PnL ${portfolio.pnl.net.toFixed(2)}</Text><Text style={{ color: theme.textSecondary }}>Funding ${portfolio.pnl.realized_funding.toFixed(2)} · trading ${portfolio.pnl.realized_trading.toFixed(2)} · unrealized ${portfolio.pnl.unrealized_leg.toFixed(2)} · fees ${portfolio.pnl.fees.toFixed(2)}</Text></Card>
-      <Card>{portfolio.by_venue.map((item) => <Text key={item.key} style={{ color: theme.textSecondary }}>{item.key} · ${item.deployed_capital.toFixed(2)} · {(item.fraction * 100).toFixed(1)}%</Text>)}</Card>
+      <Card><Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>{formatUsd(portfolio.equity)} equity</Text><Text style={{ color: theme.textSecondary }}>{formatUsd(portfolio.deployable_equity)} deployable · {formatUsd(portfolio.deployed_capital)} deployed</Text></Card>
+      <Card><Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>PnL {formatUsd(portfolio.pnl.net)}</Text><Text style={{ color: theme.textSecondary }}>Funding {formatUsd(portfolio.pnl.realized_funding)} · trading {formatUsd(portfolio.pnl.realized_trading)} · unrealized {formatUsd(portfolio.pnl.unrealized_leg)} · fees {formatUsd(portfolio.pnl.fees)}</Text></Card>
+      <Card>{portfolio.by_venue.map((item) => <Text key={item.key} style={{ color: theme.textSecondary }}>{item.key} · {formatUsd(item.deployed_capital)} · {formatPercent(item.fraction)}</Text>)}</Card>
     </>}
   </>;
 }

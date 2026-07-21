@@ -4,6 +4,8 @@
 
 ### Added
 
+- Consumed vendored API client **0.14.0** and migrated financial presentation and strategy requests to the exact-decimal string contract. Decimal-to-number conversion is display-only; request construction preserves decimal strings and exact halving. Local typecheck and all 14 mobile tests pass.
+
 - Accepted DEC-0013 and documented the M4 public multi-user pilot architecture: one personal tenant per trader, native passkey authorization, ephemeral CEX credential enrollment into backend per-tenant Vault Transit, account preflight/pilot eligibility, and fail-closed controls. M4 may grant only `PILOT`; `CERTIFIED_LIVE` begins in M7 after M6 hardening. No live capability or credential form is implemented by this docs change.
 
 - Re-sequenced the roadmap to M3 connector certification, M4 shared-VPS multi-user CEX pilot, M5 DEX, M6 hardening and M7 certified-live rollout. Documented that the phone authorizes sensitive operations but does not retain exchange credentials or supply the unattended runtime's decryption key.

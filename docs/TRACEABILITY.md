@@ -2,7 +2,7 @@
 
 | Requirement | Planned component | Verification | Status |
 |---|---|---|---|
-| Spec 10 API compatibility | versioned generated client | Exact package pin and schema compatibility CI | `0.13.0` exact vendored pin and 21 backend client tests verified; external publication pending (`0.7.0` latest confirmed published) |
+| Spec 10 API compatibility | versioned generated client | Exact package pin and schema compatibility CI | `0.14.0` exact vendored pin and 21 backend client tests verified; financial values stay decimal strings and external publication is pending (`0.7.0` latest confirmed published) |
 | Spec 11.1 client boundary | Expo app and API layer | No trading logic/retained-credentials checks | Scaffolded and enforced for current surfaces |
 | Spec 11.3 / DEC-0007 authentication | native Apple/Google, auth state machine, MFA, approval and secure session store | Unit, integration and device E2E | State/storage/UI implemented; provider configuration/device E2E pending |
 | Spec 11.4–11.14 screens | routed feature modules | Component, integration, accessibility and E2E | M2 scanner, positions, strategies, controls, portfolio, health and alerts plus M3 connector observability implemented; M2 decimal and device exit evidence pending |
