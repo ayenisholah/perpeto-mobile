@@ -4,6 +4,8 @@
 
 ### Added
 
+- M4 tenant foundation — consumed vendored API client **0.15.0** and added the authenticated personal-tenant name, base currency and paper/pilot state to Security. Tenant identity is session-derived and the app exposes no tenant selector.
+
 - Consumed vendored API client **0.14.0** and migrated financial presentation and strategy requests to the exact-decimal string contract. Decimal-to-number conversion is display-only; request construction preserves decimal strings and exact halving. Local typecheck and all 14 mobile tests pass.
 
 - Accepted DEC-0013 and documented the M4 public multi-user pilot architecture: one personal tenant per trader, native passkey authorization, ephemeral CEX credential enrollment into backend per-tenant Vault Transit, account preflight/pilot eligibility, and fail-closed controls. M4 may grant only `PILOT`; `CERTIFIED_LIVE` begins in M7 after M6 hardening. No live capability or credential form is implemented by this docs change.

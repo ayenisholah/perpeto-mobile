@@ -95,6 +95,7 @@ export class AuthController {
               email: null,
               roles: [],
               linked_providers: [],
+              tenant: { id: "unavailable", display_name: "Personal portfolio", base_currency: "USD", state: "PAPER_ONLY" },
               mfa_enrolled: false,
             },
           },

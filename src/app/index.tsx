@@ -281,6 +281,11 @@ function SecurityCenter() {
     <>
       <Heading title={`Welcome${user.display_name === null ? "" : `, ${user.display_name}`}`} body="Authentication is active. Access tokens stay in memory; only the rotating refresh credential is stored in the device keychain." />
       <Card>
+        <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>{user.tenant.display_name}</Text>
+        <Text maxFontSizeMultiplier={2} style={{ color: theme.textSecondary }}>Personal tenant · {user.tenant.base_currency} · {user.tenant.state.replaceAll("_", " ")}</Text>
+        <Text maxFontSizeMultiplier={2} style={[styles.caption, { color: theme.textSecondary, textAlign: "left" }]}>Tenant identity comes from this authenticated session and cannot be selected by the app.</Text>
+      </Card>
+      <Card>
         <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Linked providers</Text>
         {error === undefined ? null : <Text accessibilityRole="alert" style={{ color: theme.critical }}>{error}</Text>}
         {identities.map((identity) => (

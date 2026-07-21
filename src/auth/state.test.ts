@@ -9,6 +9,7 @@ const pendingUser = {
   email: null,
   roles: [],
   linked_providers: ["APPLE" as const],
+  tenant: { id: "tenant-id", display_name: "Personal portfolio", base_currency: "USD", state: "PAPER_ONLY" } as const,
   mfa_enrolled: false,
 };
 

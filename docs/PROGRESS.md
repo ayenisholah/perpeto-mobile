@@ -17,6 +17,7 @@
 - Verified local mobile lint, typecheck, documentation checks and 14 Vitest tests.
 - Verified GitHub Mobile CI green at remote `main` `9f9d58c`.
 - Verified the automated iOS workflow built Perpeto `0.2.0 (14)` and submitted it successfully to Apple App Store Connect on 2026-07-20. Post-submission Apple processing and tester availability have not been independently confirmed.
+- Consume vendored API client `0.15.0` and show the session-derived personal tenant summary in Security without exposing any caller-selectable tenant context.
 
 ## Exit gates and unverified work
 
@@ -24,7 +25,7 @@
 - Credentialed CEX sandbox/demo/shadow evidence and primary backend connector WebSocket streams are incomplete, so M3 and production trading remain unavailable.
 - Real-device Apple/Google authentication, provider linking, bootstrap, MFA/recovery, remote revocation, accessibility, privacy and security evidence remains pending.
 - API client `0.14.0` is vendored but unpublished; `0.7.0` is the latest registry release confirmed by workflow evidence.
-- M4 personal-tenant status, native platform passkeys, ephemeral exchange-credential enrollment, account preflight/live eligibility and pilot controls are not implemented. The phone will authorize changes but will not store or decrypt enrolled credentials.
+- M4 personal-tenant status is implemented locally. Native platform passkeys, ephemeral exchange-credential enrollment, account preflight/live eligibility and pilot controls are not implemented. The phone will authorize changes but will not store or decrypt enrolled credentials.
 - M4 may expose only a controlled `PILOT`; `CERTIFIED_LIVE` and broader rollout remain M7 work after M6 hardening.
 
 ## Current blockers
