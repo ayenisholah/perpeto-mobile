@@ -42,16 +42,16 @@ npx eas-cli@latest env:create --environment preview --visibility plaintext --nam
 Create the matching GitHub `preview` environment variables:
 
 ```powershell
-gh variable set EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID --env preview --repo ayenisholah/signex-mobile --body "IOS_CLIENT_ID"
-gh variable set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --env preview --repo ayenisholah/signex-mobile --body "WEB_CLIENT_ID"
-gh variable set GOOGLE_IOS_URL_SCHEME --env preview --repo ayenisholah/signex-mobile --body "REVERSED_IOS_CLIENT_ID"
+gh variable set EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID --env preview --repo ayenisholah/perpeto-mobile --body "IOS_CLIENT_ID"
+gh variable set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --env preview --repo ayenisholah/perpeto-mobile --body "WEB_CLIENT_ID"
+gh variable set GOOGLE_IOS_URL_SCHEME --env preview --repo ayenisholah/perpeto-mobile --body "REVERSED_IOS_CLIENT_ID"
 ```
 
 Verify both stores without exposing private credentials:
 
 ```powershell
 npx eas-cli@latest env:list --environment preview
-gh api repos/ayenisholah/signex-mobile/environments/preview/variables
+gh api repos/ayenisholah/perpeto-mobile/environments/preview/variables
 ```
 
 ## 2. Enable Sign in with Apple
@@ -93,20 +93,20 @@ Apple documents key creation in its [App Store Connect API guide](https://develo
 4. Copy it once and immediately add it to the GitHub `preview` environment with the following command. The CLI prompts securely for the value; do not include it in the command itself.
 
 ```powershell
-gh secret set EXPO_TOKEN --env preview --repo ayenisholah/signex-mobile
+gh secret set EXPO_TOKEN --env preview --repo ayenisholah/perpeto-mobile
 ```
 
 Confirm only the secret name:
 
 ```powershell
-gh api repos/ayenisholah/signex-mobile/environments/preview/secrets
+gh api repos/ayenisholah/perpeto-mobile/environments/preview/secrets
 ```
 
 Expo recommends access tokens instead of account passwords for CI. See [Expo programmatic access](https://docs.expo.dev/accounts/programmatic-access/).
 
 ## 5. Preflight and enable delivery
 
-Keep delivery disabled until all preceding values are configured. The workflow validates the HTTPS API URL, both Google client IDs, and the exact reversed scheme before spending an EAS build allocation.
+For a new or rotated environment, keep delivery disabled until all preceding values are configured. The current preview environment passed this gate and produced the verified `0.2.0 (14)` submission. The workflow validates the HTTPS API URL, both Google client IDs, and the exact reversed scheme before spending an EAS build allocation.
 
 Run a local configuration preflight:
 
@@ -123,8 +123,8 @@ Remove-Item Env:EAS_BUILD_PROFILE, Env:EXPO_PUBLIC_API_URL, Env:EXPO_PUBLIC_GOOG
 After the preflight succeeds, enable the iOS-only workflow:
 
 ```powershell
-gh variable set EAS_TESTFLIGHT_ENABLED --repo ayenisholah/signex-mobile --body "true"
-gh workflow run IOS_TESTFLIGHT.yml --repo ayenisholah/signex-mobile --ref main
+gh variable set EAS_TESTFLIGHT_ENABLED --repo ayenisholah/perpeto-mobile --body "true"
+gh workflow run IOS_TESTFLIGHT.yml --repo ayenisholah/perpeto-mobile --ref main
 ```
 
 The workflow runs `eas build --platform ios --profile testflight --auto-submit --non-interactive`. It does not request an Android build. Keep `EAS_TESTFLIGHT_ENABLED=false` to stop automatic delivery while credentials are rotated or the backend is unavailable.

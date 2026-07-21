@@ -1822,7 +1822,7 @@ Certification requires:
 
 Certify one venue pair/strategy route at a time. One certified connector does not automatically certify every pair, asset, account mode or strategy direction.
 
-Platform certification applies to connector code and a specific venue/route; it is not repeated from scratch for every trader. A personal tenant enables only platform-certified routes for which its connected account separately passes permission, account-mode, private-stream, reconciliation and shadow preflight, then receives explicit live eligibility and passkey-authorized arming. The M4 release floor is at least one limited-live BTC or ETH route on a certified Binance, Bybit or OKX connector for a controlled cohort. DEX certification belongs to M5.
+Platform certification applies to connector code and a specific venue/route; it is not repeated from scratch for every trader. A personal tenant enables only platform-certified routes for which its connected account separately passes permission, account-mode, private-stream, reconciliation and shadow preflight, then receives explicit live eligibility and passkey-authorized arming. The M4 release floor is at least one `PILOT` BTC or ETH route on a certified Binance, Bybit or OKX connector for a controlled cohort. `CERTIFIED_LIVE` and broader rollout begin only in M7 after M6 hardening evidence is accepted. DEX certification belongs to M5.
 
 ---
 
@@ -1889,11 +1889,11 @@ Never canary two live execution engines against the same account. Rollback resto
 - Venue onboarding/health, strategy automation, analytics and notifications.
 - Certify connector behavior individually through contract, sandbox and read-only shadow stages; production account pilots begin only after M4 tenant and credential controls pass.
 
-### Phase 4 — Shared-VPS multi-user CEX live
+### Phase 4 — Shared-VPS multi-user CEX pilot
 
 - Add personal tenants, tenant-scoped repositories and forced PostgreSQL row-level security across all private data/effects.
 - Add platform passkeys, Vault Transit per-tenant credentials, audited enrollment/rotation/revocation and 2-of-3 manual unseal/recovery.
-- Separate platform connector certification from per-account preflight, eligibility and explicit live arming; run a limited CEX live cohort.
+- Separate platform connector certification from per-account preflight, eligibility and explicit live arming; run a limited `PILOT` CEX cohort.
 
 ### Phase 5 — DEX connectors and signer
 
@@ -1907,9 +1907,9 @@ Never canary two live execution engines against the same account. Rollback resto
 - Complete deployment automation, backups/DR, security review, penetration test, runbooks and SLO dashboards.
 - iOS/Android store/internal distribution release, certificate pins, push and incident flows.
 
-### Phase 7 — Controlled live rollout
+### Phase 7 — Certified-live rollout
 
-- Read-only mainnet shadow, restricted BTC/ETH pilot, venue-pair certification and gradual capital increases.
+- Promote eligible M4 pilot routes to `CERTIFIED_LIVE` only after M6 evidence is accepted, then broaden venue-by-venue availability and capital gradually.
 - Increase capital by no more than 2× in any seven-day period.
 - Enable auto-compounding only after at least 30 incident-free live days and Owner approval.
 

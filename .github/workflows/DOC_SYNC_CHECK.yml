@@ -8,6 +8,8 @@ on:
       - AGENTS.md
       - docs/DECISION.md
       - docs/MILESTONE.md
+      - docs/ARCHITECTURE.md
+      - docs/KEY_MANAGEMENT.md
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:

@@ -4,7 +4,7 @@ Perpeto Mobile is the Expo iOS and Android operations client for the private Per
 
 ## Current status
 
-M2 paper trading and mobile monitoring are complete; M3 CEX integration is in progress. The app includes authentication, scanner, positions, strategies, emergency controls, portfolio/PnL, health, alerts, and a masked Exchanges tab with sandbox preview/submit and exact connector accounting/reconciliation reads. It never receives exchange credentials or enables production writes. See [PROGRESS.md](docs/PROGRESS.md).
+M2 paper features and their mobile monitoring surfaces are implemented, but shared exit gates remain open for the backend's lossless-decimal contract and required evidence. M3 CEX integration is in progress. The app includes authentication, scanner, positions, strategies, emergency controls, portfolio/PnL, health, alerts, and a masked Exchanges tab with sandbox preview/submit and exact connector accounting/reconciliation reads. It never receives exchange credentials or enables production writes. See [PROGRESS.md](docs/PROGRESS.md).
 
 ## Authoritative documents
 
@@ -26,6 +26,6 @@ Set `EXPO_PUBLIC_API_URL` to the paper backend URL. No mutation is permitted whi
 
 ## Delivery
 
-Pull requests run checks only. The app is linked to `@ayenisholah/signex-mobile`; successful `main` builds may trigger an iOS-only EAS TestFlight build and submission after the provider values and protected automation credentials are configured. Android delivery and production OTA channels are outside this slice. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
+Pull requests run checks only. The app is linked to EAS project `@ayenisholah/signex-mobile`; successful `main` builds trigger the enabled iOS-only TestFlight workflow while its protected provider and automation configuration remains valid. The latest verified run submitted `0.2.0 (14)` to App Store Connect. Android delivery and production OTA channels are outside this slice. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
 
 No license has been granted yet. Until a license decision is recorded, all rights are reserved.

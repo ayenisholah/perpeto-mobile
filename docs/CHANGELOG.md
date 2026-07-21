@@ -4,9 +4,11 @@
 
 ### Added
 
-- Accepted and documented the M4 public multi-user app architecture: one personal tenant per trader, native passkey authorization, ephemeral CEX credential enrollment into backend per-tenant Vault Transit, account preflight/live eligibility, and fail-closed limited-live controls. Added canonical `ARCHITECTURE.md` and `KEY_MANAGEMENT.md`; no live capability or credential form is implemented by this docs change.
+- Accepted DEC-0013 and documented the M4 public multi-user pilot architecture: one personal tenant per trader, native passkey authorization, ephemeral CEX credential enrollment into backend per-tenant Vault Transit, account preflight/pilot eligibility, and fail-closed controls. M4 may grant only `PILOT`; `CERTIFIED_LIVE` begins in M7 after M6 hardening. No live capability or credential form is implemented by this docs change.
 
-- Re-sequenced the roadmap to M3 connector certification, M4 shared-VPS multi-user CEX live, M5 DEX, M6 hardening and M7 broader rollout. Documented that the phone authorizes sensitive operations but does not retain exchange credentials or supply the unattended runtime's decryption key.
+- Re-sequenced the roadmap to M3 connector certification, M4 shared-VPS multi-user CEX pilot, M5 DEX, M6 hardening and M7 certified-live rollout. Documented that the phone authorizes sensitive operations but does not retain exchange credentials or supply the unattended runtime's decryption key.
+
+- Verified the enabled TestFlight workflow built Perpeto `0.2.0 (14)` and submitted it successfully to Apple App Store Connect; Apple processing and tester availability remain separate evidence.
 
 - M3 Slice 19 — the Exchanges tab now shows exact connector order history, reconciliation status/discrepancy counts, and the latest reconciled balances and venue positions using vendored API client **0.13.0**. Decimal values remain strings and no credential material reaches mobile.
 
@@ -38,7 +40,9 @@
 
 ### Changed
 
-- Updated repository and milestone status to reflect complete M2 mobile monitoring, the client 0.13 connector surfaces, and the remaining M3 WebSocket/certification gates.
+- Reconciled progress and traceability with current evidence: M2 mobile features are implemented but shared exact-decimal/device exit gates remain open; client 0.13 connector surfaces are present; M3 WebSocket/certification gates remain incomplete.
+
+- Expanded shared-document drift coverage to architecture/key-management sources, hardened nested dependency/cache exclusions, and updated deployment commands to the renamed `perpeto-mobile` GitHub repository.
 
 - Rebranded the app from **Signex** to **Perpeto** ("The perpetual edge"): a new perpetual-loop mark (interlocking mint/sky ribbon) for the icon, adaptive icon, splash and wordmark; the "Quant Terminal" palette (near-black ink `#0A0C10`, mint accent `#34E0A1`, sky secondary `#38BDF8`); and updated user-facing copy. Brand assets are generated from `assets/brand/perpeto-*.svg` via `npm run brand:render`. The vendored contract package is renamed to `@ayenisholah/perpeto-api-client` (client class `PerpetoClient`). The `com.signex.mobile` bundle ID, `signex://` deep-link scheme, `signex-mobile` slug, EAS linkage, and `signex.auth.*` secure-store keys are intentionally preserved so no re-provisioning or forced sign-out occurs.
 - Updated the sign-in copy for the shared v1 open-registration backend (DEC-0009): new accounts currently get full access immediately. DEC-0012 now supersedes that model for M4; the target grants a personal paper tenant and requires separate passkey/account eligibility for live use.

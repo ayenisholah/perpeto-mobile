@@ -1,6 +1,6 @@
 # Perpeto Overview
 
-<!-- SHARED-CONTENT-VERSION: 2 -->
+<!-- SHARED-CONTENT-VERSION: 3 -->
 
 ## What problem does Perpeto solve?
 
@@ -17,7 +17,7 @@ The product is becoming a multi-user service: one shared Perpeto deployment serv
 - HashiCorp Vault Transit protects exchange credentials with a distinct key per tenant. Runtime services receive narrow encrypt/decrypt capabilities, not Vault root credentials.
 - Public market data and certified connector code may be shared. Private streams, account state, risk, orders, positions, alerts, audit records, breakers, and credentials are tenant-scoped.
 
-The current implementation does not yet provide these multi-user live guarantees. M3 certifies CEX connector behavior; M4 adds tenant isolation, passkey-authorized credential enrollment, Vault-backed secrets, account preflight, and limited live execution. Until M4 passes its acceptance gates, external writes remain restricted to certified sandbox environments and live mode remains fail-closed.
+The current implementation does not yet provide these multi-user live guarantees. M3 certifies CEX connector behavior without production writes. M4 adds tenant isolation, passkey-authorized credential enrollment, Vault-backed secrets, account preflight, and a controlled `PILOT` cohort. M6 hardens that deployment before M7 may broaden rollout and grant `CERTIFIED_LIVE`. Until every M4 gate passes, external writes remain restricted to certified sandbox environments and live mode remains fail-closed.
 
 ## Product objectives
 

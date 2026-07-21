@@ -1,10 +1,10 @@
 # Perpeto Shared-VPS Architecture
 
-<!-- SHARED-CONTENT-VERSION: 1 -->
+<!-- SHARED-CONTENT-VERSION: 2 -->
 
 ## Status and scope
 
-This document defines the accepted target architecture for M4. It is not a claim that the current runtime is safe for multi-user live trading. The current paper and M3 connector runtime must remain fail-closed for production exchange writes until the M4 isolation, credential, authorization, and recovery gates pass.
+This document defines the accepted target architecture for the controlled M4 `PILOT`. It is not a claim that the current runtime is safe for multi-user live trading. The current paper and M3 connector runtime must remain fail-closed for production exchange writes until the M4 isolation, credential, authorization, and recovery gates pass. M6 hardening must pass before M7 can broaden rollout or grant `CERTIFIED_LIVE`.
 
 One operator-managed VPS hosts a shared Perpeto control plane. Many independent traders use the public mobile app, but each trader owns exactly one personal tenant and connects only their own exchange accounts. Team tenants, shared portfolios and customer-fund custody are out of scope.
 
@@ -57,7 +57,9 @@ Connector certification and account eligibility are distinct gates:
 2. A trader enrolls a least-privilege credential using a passkey-authorized, one-use submission flow.
 3. Perpeto validates credential permissions, account and margin mode, instrument coverage, balances, clocks, private streams, reconciliation and shadow behavior.
 4. The trader reviews limits and explicitly arms live trading with a new passkey assertion and typed confirmation.
-5. The engine may open risk only for that tenant, account and certified route. Global and tenant breakers are both enforced.
+5. The engine may open M4 pilot risk only for that tenant, account and platform-certified route. Global and tenant breakers are both enforced.
+
+M4 may grant only the controlled `PILOT` state. `CERTIFIED_LIVE` remains unavailable until M6 hardening is accepted and M7 rollout begins.
 
 Disarming, credential revocation, tenant breaker activation or failed eligibility blocks new risk immediately. Flattening is explicit and policy-checked; revoking a credential before flattening may prevent Perpeto from closing venue positions, so the UI and runbook must explain and sequence that risk.
 

@@ -3,40 +3,39 @@
 ## Snapshot
 
 - Milestone: M3 — CEX connector certification
-- Overall state: In progress (mobile monitoring implemented)
-- Last verified: 2026-07-20
+- Overall state: In progress (M2/M3 mobile surfaces implemented; shared exit and device-evidence gates remain open)
+- Last verified: 2026-07-21
 
-## Completed
+## Completed or implemented
 
-- Expo SDK 57 official template adopted as the native compatibility baseline.
-- Documentation hierarchy, CI, branch protection, API update, and shared-document drift workflows established.
-- Convergent S branding, production assets, semantic light/dark tokens, and accessible Liquid Glass surfaces implemented.
-- Personal EAS project `@ayenisholah/signex-mobile`, paper API environment, GitHub Packages authentication path, iOS registration, and update URL configured.
-- iOS App Store build `0.1.0 (3)` accepted by EAS Submit for TestFlight processing; App Store Connect app `6790819875` and the `Team (Expo)` tester group are configured.
-- Consumes the locally verified `@ayenisholah/perpeto-api-client@0.13.0` vendored tarball exactly; no remote package publication was performed.
-- Added the M2 Scanner (Slices 1–2), Slice 3 Positions/open action, Slice 4 close/funding/PnL display, and Slice 5a persistent re-hedge badges plus auto/manual exit reasons.
-- Added Apple/Google native entry points, a fail-closed authentication state machine, first-Owner bootstrap, pending isolation, privileged TOTP/recovery enrollment, Secure Store refresh rotation, Owner access approval, identity linking/unlinking, session revocation, logout, and deletion UI.
-- Declared the Sign in with Apple capability for `com.signex.mobile` and the EAS contract for Google iOS/Web OAuth configuration.
-- Replaced the cross-platform preview workflow with a gated iOS-only TestFlight build-and-submit workflow that rejects missing or inconsistent Google configuration.
-- Configured modular headers for the Google Sign-In iOS dependency chain after the first `0.2.0 (4)` EAS attempt failed during CocoaPods installation; replacement archive verification is pending.
+- Adopted Expo SDK 57, the Perpeto perpetual-loop brand, semantic light/dark tokens and accessible Liquid Glass primitives.
+- Established documentation, CI, branch protection, API-update, shared-document drift and iOS TestFlight automation.
+- Implemented native Apple/Google entry points, the fail-closed authentication state machine, bootstrap/pending/MFA/recovery flows, Secure Store refresh rotation, approvals, identity/session management, logout and deletion UI.
+- Implemented the M2 scanner, opportunity detail/risk, positions, paper open/close/re-hedge/recovery, strategies, emergency controls, portfolio/PnL, health and alerts surfaces.
+- Implemented the M3 Exchanges surface for masked venue accounts, connection tests/disable, exact sandbox order previews/submission, recent connector orders, reconciliation summaries, balances and venue positions. Production submissions remain unavailable.
+- Consume the exact vendored `@ayenisholah/perpeto-api-client@0.13.0` tarball; the matching backend client passes local typecheck, 21 contract tests and package verification.
+- Verified local mobile lint, typecheck, documentation checks and 14 Vitest tests.
+- Verified GitHub Mobile CI green at remote `main` `9f9d58c`.
+- Verified the automated iOS workflow built Perpeto `0.2.0 (14)` and submitted it successfully to Apple App Store Connect on 2026-07-20. Post-submission Apple processing and tester availability have not been independently confirmed.
 
-## Not completed
+## Exit gates and unverified work
 
-- Credentialed CEX sandbox/shadow evidence and primary connector WebSocket streams are not complete, so M3 and production trading remain unavailable.
-- Real-device, accessibility, and security certification evidence is still pending.
-- The versioned backend client package is consumed from a checked-in deterministic tarball but is not yet published to GitHub Packages.
-- No M1A real-device, accessibility, or security certification evidence exists.
-- M4 personal-tenant status, native platform passkeys, ephemeral exchange-credential enrollment, per-account preflight/live eligibility and production live controls are not implemented. The accepted backend secret target is per-tenant Vault Transit; the phone will authorize changes but will not store or decrypt enrolled credentials.
+- M2 remains open under the shared completion standard because the backend wire/persistence contract still uses `f64` for monetary, rate, price, quantity and PnL values; mobile must update in lockstep with the eventual lossless-decimal contract.
+- Credentialed CEX sandbox/demo/shadow evidence and primary backend connector WebSocket streams are incomplete, so M3 and production trading remain unavailable.
+- Real-device Apple/Google authentication, provider linking, bootstrap, MFA/recovery, remote revocation, accessibility, privacy and security evidence remains pending.
+- API client `0.13.0` is vendored but unpublished; `0.7.0` is the latest registry release confirmed by workflow evidence.
+- M4 personal-tenant status, native platform passkeys, ephemeral exchange-credential enrollment, account preflight/live eligibility and pilot controls are not implemented. The phone will authorize changes but will not store or decrypt enrolled credentials.
+- M4 may expose only a controlled `PILOT`; `CERTIFIED_LIVE` and broader rollout remain M7 work after M6 hardening.
 
-## Blockers
+## Current blockers
 
-- Expo SDK 57 and native-auth dependencies resolve 12 moderate upstream advisories with no accepted non-breaking fix; there are no known high or critical advisories in the verified audit.
-- Non-interactive TestFlight delivery awaits an Expo access token, App Store Connect API key verification, and the three Google public identifiers in both EAS and the GitHub `preview` environment.
-- Google authentication builds require `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, and `GOOGLE_IOS_URL_SCHEME` plus matching Google console configuration.
-- Client publication awaits the backend versioned release workflow; the next authentication TestFlight archive awaits the backend runtime and configured provider values.
+- M1 device evidence requires physical-device TestFlight execution and configured provider accounts; a successful archive/submission is delivery evidence only.
+- M3 device verification depends on a build-compatible backend whose connector runtime has passed CI and on accepted credentialed certification evidence.
+- Permanent consumption of client `0.13.0` depends on publishing that version and replacing the checked-in tarball through the versioned API-update workflow.
 
-## Next verified task
+## Next verified tasks
 
-Import least-privilege server-side test credentials, run the M3 sandbox/shadow certification matrix, and verify the Exchanges monitoring path on a real device.
-
-After M3 closes and the backend publishes the first M4 tenant/passkey contract, implement the personal-tenant session slice. Do not add credential fields before the one-use, passkey-authorized Vault enrollment contract exists.
+1. Confirm Apple processing/TestFlight availability for `0.2.0 (14)` and execute the recorded real-device authentication/accessibility matrix.
+2. After the backend passes CI and M3 evidence is available, verify the Exchanges monitoring path on a real device.
+3. Consume the lossless-decimal API revision required to close M2.
+4. After the first backend M4 tenant/passkey contract is published, implement the personal-tenant session slice; do not add credential fields before the one-use, passkey-authorized Vault enrollment contract exists.

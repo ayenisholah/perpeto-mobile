@@ -2,7 +2,7 @@
 
 ## Current objective
 
-Keep the existing M2 monitoring and M3 connector-observability surfaces paper/shadow-safe. After backend M4 tenant, passkey and Vault contracts land, implement consumer credential enrollment and limited-live controls in small contract-pinned slices.
+Keep the existing M2 monitoring and M3 connector-observability surfaces paper/shadow-safe. First consume the backend's lossless-decimal contract required to close M2 and complete the pending device evidence. After backend M4 tenant, passkey and Vault contracts land, implement consumer credential enrollment and `PILOT` controls in small contract-pinned slices.
 
 ## M4 ordered slices
 
@@ -10,7 +10,7 @@ Keep the existing M2 monitoring and M3 connector-observability surfaces paper/sh
 2. **Passkey lifecycle:** register/list/revoke platform passkeys with native iOS/Android credential APIs; handle RP/origin errors, cancellation, lost-device recovery and remote session revocation.
 3. **Secure enrollment UX:** collect CEX API key/secret/passphrase in ephemeral, non-persisted fields; suppress analytics, screenshots and crash breadcrumbs; bind submission to a one-use passkey-authorized operation and clear on every exit path.
 4. **Account preflight:** display permissions, account/margin mode, connection/private-stream health, reconciliation and shadow results. Explain why read/trade-only credentials with withdrawals/transfers/admin disabled are mandatory.
-5. **Live arming:** show platform connector certification separately from personal account eligibility; require fresh passkey and typed `ENABLE LIVE`; display exact tenant/account/routes/limits being armed.
+5. **Pilot arming:** show platform connector certification separately from personal account eligibility; require fresh passkey and typed `ENABLE PILOT`; display exact tenant/account/routes/limits being armed. Do not present M4 as `CERTIFIED_LIVE`.
 6. **Live monitoring and containment:** show tenant/global breaker badges, stale/private-stream/Vault status, disarm, pause, close and flatten actions with server-confirmed outcomes and in-flight recovery.
 7. **Credential lifecycle:** passkey-authorized rotation/revocation, sequencing warnings for open positions, exchange-side revoke guidance and deletion/recovery states. Never offer secret reveal/export.
 8. **Store evidence:** real iOS/Android tests for passkeys, background/offline automation visibility, push deep links, accessibility, privacy shield, enrollment cleanup and fail-closed contract behavior.
@@ -23,4 +23,4 @@ Generated API types remain authoritative; decimal math remains display-only. Liv
 
 ## Deferred
 
-Team/shared tenants, copy trading, automatic CEX transfers/withdrawals and arbitrary external-wallet signing remain unavailable. DEX signer approval UI moves to M5. Broader production rollout follows M6 hardening in M7.
+Team/shared tenants, copy trading, automatic CEX transfers/withdrawals and arbitrary external-wallet signing remain unavailable. DEX signer approval UI moves to M5. `CERTIFIED_LIVE` and broader production rollout follow M6 hardening in M7.
