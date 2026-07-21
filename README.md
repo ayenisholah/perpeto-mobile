@@ -4,7 +4,7 @@ Perpeto Mobile is the Expo iOS and Android operations client for the private Per
 
 ## Current status
 
-M2 paper features and their mobile monitoring surfaces are implemented, but shared exit gates remain open for the backend's lossless-decimal contract and required evidence. M3 CEX integration is in progress. The app includes authentication, scanner, positions, strategies, emergency controls, portfolio/PnL, health, alerts, and a masked Exchanges tab with sandbox preview/submit and exact connector accounting/reconciliation reads. It never receives exchange credentials or enables production writes. See [PROGRESS.md](docs/PROGRESS.md).
+M2 paper features, their mobile monitoring surfaces and the lossless-decimal `0.15.0` client integration are implemented, but shared exit gates remain open for backend Rust/PostgreSQL and device evidence. M3 CEX integration is in progress. The app includes authentication, a session-derived personal-tenant summary, scanner, positions, strategies, emergency controls, portfolio/PnL, health, alerts, and a masked Exchanges tab with sandbox preview/submit and exact connector accounting/reconciliation reads. It never receives exchange credentials or enables production writes. See [PROGRESS.md](docs/PROGRESS.md).
 
 ## Authoritative documents
 

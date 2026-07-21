@@ -4,6 +4,10 @@
 
 ### Added
 
+- Synchronized the mobile roadmap with backend M3 WebSocket/sequence-recovery implementation and the first M4 forced-RLS/private-runtime slice. Both remain locally unverified on the Rust/PostgreSQL side; no tenant selector, credential field or pilot control was added to mobile. Local mobile typecheck and all 14 tests pass.
+
+- Documentation audit — synchronized README, implementation, milestone, progress and traceability claims with the consumed `0.15.0` client and implemented personal-tenant session slice. Backend Rust/PostgreSQL and device evidence, passkeys, credential enrollment and every pilot/live gate remain explicitly open.
+
 - M4 tenant foundation — consumed vendored API client **0.15.0** and added the authenticated personal-tenant name, base currency and paper/pilot state to Security. Tenant identity is session-derived and the app exposes no tenant selector.
 
 - Consumed vendored API client **0.14.0** and migrated financial presentation and strategy requests to the exact-decimal string contract. Decimal-to-number conversion is display-only; request construction preserves decimal strings and exact halving. Local typecheck and all 14 mobile tests pass.

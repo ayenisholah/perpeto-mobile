@@ -2,11 +2,11 @@
 
 ## Current objective
 
-Keep the existing M2 monitoring and M3 connector-observability surfaces paper/shadow-safe. First consume the backend's lossless-decimal contract required to close M2 and complete the pending device evidence. After backend M4 tenant, passkey and Vault contracts land, implement consumer credential enrollment and `PILOT` controls in small contract-pinned slices.
+Keep the existing M2 monitoring and M3 connector-observability surfaces paper/shadow-safe, retain the consumed lossless-decimal contract, and complete the pending backend/device evidence. The personal-tenant session slice and backend's first forced-RLS/private-runtime slice are implemented locally; database/adversarial evidence remains open. Implement consumer credential enrollment and `PILOT` controls only after the separate passkey and Vault contracts land in small contract-pinned slices.
 
 ## M4 ordered slices
 
-1. **Personal tenant session:** consume session-derived tenant status and paper/live eligibility without accepting or storing a selectable tenant ID.
+1. **Personal tenant session — implemented locally:** consume session-derived tenant status and paper/pilot eligibility without accepting or storing a selectable tenant ID. Cross-account and physical-device evidence remains open.
 2. **Passkey lifecycle:** register/list/revoke platform passkeys with native iOS/Android credential APIs; handle RP/origin errors, cancellation, lost-device recovery and remote session revocation.
 3. **Secure enrollment UX:** collect CEX API key/secret/passphrase in ephemeral, non-persisted fields; suppress analytics, screenshots and crash breadcrumbs; bind submission to a one-use passkey-authorized operation and clear on every exit path.
 4. **Account preflight:** display permissions, account/margin mode, connection/private-stream health, reconciliation and shadow results. Explain why read/trade-only credentials with withdrawals/transfers/admin disabled are mandatory.
