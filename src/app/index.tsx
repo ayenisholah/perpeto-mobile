@@ -27,6 +27,7 @@ import type {
   Opportunity,
   OpportunityFilter,
   OpportunitySort,
+  Passkey,
   Position,
   Portfolio,
   PositionLeg,
@@ -42,9 +43,11 @@ import type {
 } from "@ayenisholah/perpeto-api-client";
 
 import { useAuth } from "@/auth/AuthContext";
+import { createPasskeyCredential } from "@/auth/passkeys";
 import { GlassSurface } from "@/components/GlassSurface";
 import { exitReasonLabel, wasRehedged } from "@/components/positionPresentation";
 import { ProviderButton } from "@/components/ProviderButton";
+import { passkeysEnabled } from "@/config/featureFlags";
 import { themes, type Theme } from "@/theme/tokens";
 
 const markDark = require("../../assets/brand/mark-dark.png");
@@ -241,6 +244,75 @@ function MfaEnrollment() {
   );
 }
 
+function PasskeysCard() {
+  const theme = useColorScheme() === "light" ? themes.light : themes.dark;
+  const { controller } = useAuth();
+  const [passkeys, setPasskeys] = useState<readonly Passkey[]>([]);
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(() => {
+    void controller.client
+      .listPasskeys()
+      .then(setPasskeys)
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Could not load passkeys."));
+  }, [controller]);
+  useEffect(() => queueMicrotask(refresh), [refresh]);
+
+  const register = async () => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      const challenge = await controller.client.startPasskeyRegistration();
+      const credential = await createPasskeyCredential(challenge.options);
+      await controller.client.finishPasskeyRegistration({
+        challenge_id: challenge.challenge_id,
+        label: `${Platform.OS === "ios" ? "iPhone" : "Device"} passkey`,
+        credential,
+      });
+      refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not add a passkey.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const revoke = (id: string) => {
+    setError(undefined);
+    void controller.client
+      .revokePasskey(id)
+      .then(refresh)
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Could not revoke the passkey."));
+  };
+
+  return (
+    <Card>
+      <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Passkeys</Text>
+      <Text maxFontSizeMultiplier={2} style={[styles.caption, { color: theme.textSecondary, textAlign: "left" }]}>
+        Passkeys authorize sensitive credential and live-trading actions. Adding one requires the biometric authenticator on this device.
+      </Text>
+      {error === undefined ? null : <Text accessibilityRole="alert" style={{ color: theme.critical }}>{error}</Text>}
+      {passkeys.length === 0 ? (
+        <Text maxFontSizeMultiplier={2} style={{ color: theme.textSecondary }}>No passkeys registered yet.</Text>
+      ) : (
+        passkeys.map((passkey) => (
+          <View key={passkey.id} style={styles.row}>
+            <View>
+              <Text maxFontSizeMultiplier={2} style={{ color: theme.textPrimary }}>{passkey.label}</Text>
+              <Text maxFontSizeMultiplier={2} style={{ color: theme.textSecondary }}>
+                Added {formatClock(passkey.created_at)}{passkey.last_used_at === null ? "" : ` · used ${formatClock(passkey.last_used_at)}`}
+              </Text>
+            </View>
+            <Button label="Remove" onPress={() => revoke(passkey.id)} />
+          </View>
+        ))
+      )}
+      <Button disabled={busy} label={busy ? "Adding passkey…" : "Add a passkey"} onPress={() => void register()} />
+    </Card>
+  );
+}
+
 function SecurityCenter() {
   const { state, controller, logout, deleteAccount } = useAuth();
   const [sessions, setSessions] = useState<readonly Session[]>([]);
@@ -328,6 +400,7 @@ function SecurityCenter() {
           </View>
         ))}
       </Card>
+      {passkeysEnabled() ? <PasskeysCard /> : null}
       {!owner ? null : (
         <Card>
           <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Pending access</Text>
