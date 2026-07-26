@@ -28,6 +28,7 @@ import type {
   OpportunityFilter,
   OpportunitySort,
   Passkey,
+  PilotStatus,
   Position,
   Portfolio,
   PositionLeg,
@@ -404,6 +405,94 @@ function CredentialEnrollmentCard() {
   );
 }
 
+function PilotCard() {
+  const theme = useColorScheme() === "light" ? themes.light : themes.dark;
+  const { controller } = useAuth();
+  const [status, setStatus] = useState<PilotStatus>();
+  const [confirmation, setConfirmation] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  const refresh = useCallback(() => {
+    void controller.client
+      .getPilotStatus()
+      .then(setStatus)
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Could not load pilot status."));
+  }, [controller]);
+  useEffect(() => queueMicrotask(refresh), [refresh]);
+
+  const run = async (action: () => Promise<unknown>) => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await action();
+      refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The pilot action failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const arm = (route: PilotStatus["eligible"][number]) =>
+    void run(async () => {
+      const challenge = await controller.client.startPilotArm({
+        venue_account_id: route.venue_account_id,
+        product: route.product,
+      });
+      const assertion = await getPasskeyAssertion(challenge.options);
+      await controller.client.finishPilotArm({
+        challenge_id: challenge.challenge_id,
+        venue_account_id: route.venue_account_id,
+        product: route.product,
+        assertion,
+        confirmation,
+      });
+      setConfirmation("");
+    });
+
+  const current = status?.state;
+  return (
+    <Card>
+      <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Pilot arming</Text>
+      <Text maxFontSizeMultiplier={2} style={[styles.caption, { color: theme.textSecondary, textAlign: "left" }]}>
+        {current === undefined ? "Loading…" : `State: ${current.replaceAll("_", " ")}`}. Arming is control-plane only until live trading is certified.
+      </Text>
+      {error === undefined ? null : <Text accessibilityRole="alert" style={{ color: theme.critical }}>{error}</Text>}
+      {current === "PAPER_ONLY" ? (
+        <Button disabled={busy || (status?.eligible.length ?? 0) === 0} label="Request pilot eligibility" onPress={() => void run(() => controller.client.grantPilotEligibility())} />
+      ) : null}
+      {current === "PILOT_ELIGIBLE" ? (
+        <>
+          <TextInput
+            accessibilityLabel="Account alias confirmation"
+            autoCapitalize="none"
+            autoCorrect={false}
+            onChangeText={setConfirmation}
+            placeholder="Type the account alias to confirm"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { borderColor: theme.border, color: theme.textPrimary }]}
+            value={confirmation}
+          />
+          {(status?.eligible ?? []).length === 0 ? (
+            <Text maxFontSizeMultiplier={2} style={{ color: theme.textSecondary }}>No preflight-eligible routes yet.</Text>
+          ) : (
+            (status?.eligible ?? []).map((route) => (
+              <View key={`${route.venue_account_id}:${route.product}`} style={styles.row}>
+                <Text maxFontSizeMultiplier={2} style={{ color: theme.textPrimary }}>{route.alias} · {route.product}</Text>
+                <Button disabled={busy || confirmation.trim() !== route.alias} label="Arm" onPress={() => arm(route)} />
+              </View>
+            ))
+          )}
+        </>
+      ) : null}
+      {current === "PILOT_ARMED" ? (
+        <Button destructive disabled={busy} label="Disarm and halt new risk" onPress={() => void run(() => controller.client.disarmPilot())} />
+      ) : null}
+    </Card>
+  );
+}
+
 function SecurityCenter() {
   const { state, controller, logout, deleteAccount } = useAuth();
   const [sessions, setSessions] = useState<readonly Session[]>([]);
@@ -493,6 +582,7 @@ function SecurityCenter() {
       </Card>
       {passkeysEnabled() ? <PasskeysCard /> : null}
       {passkeysEnabled() ? <CredentialEnrollmentCard /> : null}
+      {passkeysEnabled() ? <PilotCard /> : null}
       {!owner ? null : (
         <Card>
           <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Pending access</Text>
