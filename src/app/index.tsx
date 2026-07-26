@@ -43,7 +43,7 @@ import type {
 } from "@ayenisholah/perpeto-api-client";
 
 import { useAuth } from "@/auth/AuthContext";
-import { createPasskeyCredential } from "@/auth/passkeys";
+import { createPasskeyCredential, getPasskeyAssertion } from "@/auth/passkeys";
 import { GlassSurface } from "@/components/GlassSurface";
 import { exitReasonLabel, wasRehedged } from "@/components/positionPresentation";
 import { ProviderButton } from "@/components/ProviderButton";
@@ -313,6 +313,97 @@ function PasskeysCard() {
   );
 }
 
+function CredentialEnrollmentCard() {
+  const theme = useColorScheme() === "light" ? themes.light : themes.dark;
+  const { controller } = useAuth();
+  const [venue, setVenue] = useState<Venue>("BYBIT");
+  const [alias, setAlias] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const [done, setDone] = useState<string>();
+
+  const enroll = async () => {
+    setBusy(true);
+    setError(undefined);
+    setDone(undefined);
+    const fields = { venue, alias, product: "LINEAR_PERPETUAL", environment: "TESTNET" } as const;
+    try {
+      const challenge = await controller.client.startCredentialEnrollment(fields);
+      const assertion = await getPasskeyAssertion(challenge.options);
+      const account = await controller.client.finishCredentialEnrollment({
+        challenge_id: challenge.challenge_id,
+        ...fields,
+        assertion,
+        credential: { api_key: apiKey, api_secret: apiSecret },
+      });
+      setDone(`Enrolled ${account.masked_identity}. Preflight pending.`);
+      setAlias("");
+      setApiKey("");
+      setApiSecret("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Enrollment failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const ready =
+    alias.trim().length > 0 && apiKey.trim().length > 0 && apiSecret.trim().length > 0;
+
+  return (
+    <Card>
+      <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Enroll exchange credential</Text>
+      <Text maxFontSizeMultiplier={2} style={[styles.caption, { color: theme.textSecondary, textAlign: "left" }]}>
+        Testnet only. Keys are sent once, encrypted in the backend, and never stored on this device. A passkey authorizes the enrollment.
+      </Text>
+      {error === undefined ? null : <Text accessibilityRole="alert" style={{ color: theme.critical }}>{error}</Text>}
+      {done === undefined ? null : <Text style={{ color: theme.signal }}>{done}</Text>}
+      <View style={styles.pillRow}>
+        {(["BYBIT", "BINANCE", "OKX"] as const).map((option) => (
+          <Pill key={option} label={option} active={venue === option} onPress={() => setVenue(option)} />
+        ))}
+      </View>
+      <TextInput
+        accessibilityLabel="Account alias"
+        autoCapitalize="none"
+        autoCorrect={false}
+        onChangeText={setAlias}
+        placeholder="Account alias"
+        placeholderTextColor={theme.textSecondary}
+        style={[styles.input, { borderColor: theme.border, color: theme.textPrimary }]}
+        value={alias}
+      />
+      <TextInput
+        accessibilityLabel="API key"
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        onChangeText={setApiKey}
+        placeholder="API key"
+        placeholderTextColor={theme.textSecondary}
+        secureTextEntry
+        style={[styles.input, { borderColor: theme.border, color: theme.textPrimary }]}
+        value={apiKey}
+      />
+      <TextInput
+        accessibilityLabel="API secret"
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        onChangeText={setApiSecret}
+        placeholder="API secret"
+        placeholderTextColor={theme.textSecondary}
+        secureTextEntry
+        style={[styles.input, { borderColor: theme.border, color: theme.textPrimary }]}
+        value={apiSecret}
+      />
+      <Button disabled={!ready || busy} label={busy ? "Enrolling…" : "Enroll (testnet)"} onPress={() => void enroll()} />
+    </Card>
+  );
+}
+
 function SecurityCenter() {
   const { state, controller, logout, deleteAccount } = useAuth();
   const [sessions, setSessions] = useState<readonly Session[]>([]);
@@ -401,6 +492,7 @@ function SecurityCenter() {
         ))}
       </Card>
       {passkeysEnabled() ? <PasskeysCard /> : null}
+      {passkeysEnabled() ? <CredentialEnrollmentCard /> : null}
       {!owner ? null : (
         <Card>
           <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Pending access</Text>
