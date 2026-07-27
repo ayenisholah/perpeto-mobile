@@ -1,17 +1,18 @@
 # Product Milestones
 
-<!-- SHARED-CONTENT-VERSION: 2 -->
+<!-- SHARED-CONTENT-VERSION: 6 -->
 
 | ID | Milestone | Exit evidence | Status |
 |---|---|---|---|
 | M0 | Governance and scaffolding | Two repositories, protected workflow design, synchronized documents, executable scaffolds, contract seed, CI and paper staging automation | Implementation complete; `0.1.0` publication evidence pending |
 | M1 | Foundations and simulator | Durable domain, auth, audit, deterministic simulator, ledger, Expo shell and generated client | In progress (M1A social-auth contract/domain) |
-| M2 | Scanner and paper trading | Normalized markets, forecasts, opportunity/risk engine, coordinated paper lifecycle and complete mobile monitoring | Complete (paper lifecycle, automated strategies, emergency controls, portfolio/health/alerts, mobile monitoring) |
-| M3 | CEX integrations | Binance, Bybit and OKX contract suites, reconciliation and staged certification evidence | In progress (connector engineering and evidence tooling implemented; primary WebSocket streams and credentialed timed certification pending) |
-| M4 | DEX integrations | dYdX, Hyperliquid, isolated signer, nonce/chain recovery and approval flows | Not started |
-| M5 | Operational hardening | Fault injection, DR, runbooks, SLOs, accessibility and security review pass | Not started |
-| M6 | Controlled live rollout | Approved production automation and venue-by-venue pilot evidence | Not started |
+| M2 | Scanner and paper trading | Normalized markets, forecasts, opportunity/risk engine, coordinated paper lifecycle and complete mobile monitoring | Feature implementation complete; exit gates reopened (exact-decimal wire/persistence, current backend CI, and dependent M1 evidence pending) |
+| M3 | CEX connector certification | Binance, Bybit and OKX contract suites, reconciliation, sandbox writes, read-only shadow operation, and platform-level staged certification evidence | In progress (primary public/private WebSocket and sequence-recovery code implemented locally; linked build, credentialed probes, and timed certification evidence pending) |
+| M4 | Shared-VPS multi-user CEX pilot | Personal tenants, PostgreSQL RLS, passkeys, Vault Transit credentials, account preflight, tenant risk isolation, and a controlled `PILOT` cohort | In progress (session-derived tenant identity and the first forced-RLS/private-runtime isolation slice implemented locally; database verification, passkeys, Vault, preflight, and pilot gates pending) |
+| M5 | DEX integrations | dYdX, Hyperliquid, isolated signer, nonce/chain recovery and approval flows | Not started |
+| M6 | Operational hardening | Fault injection, DR, runbooks, SLOs, accessibility, security review, and shared-VPS blast-radius reduction | Not started |
+| M7 | Certified-live rollout | `CERTIFIED_LIVE` approval and venue-by-venue rollout evidence beyond the limited M4 cohort after M6 hardening | Not started |
 
 No milestone closes from code completion alone. Its traceability, tests, security evidence, documentation, and backend/mobile compatibility must also pass.
 
-Registration policy: version 1 runs one shared backend with `PERPETO_OPEN_REGISTRATION` enabled so every tester gets immediate full access (DEC-0009). Version 2 provisions an isolated backend per user and restores gated approval and mandatory MFA; per-user backend isolation is tracked as a post-M1 architectural objective.
+The shared deployment is not authorized for live trading merely because registration is available. DEC-0012 supersedes the interim universal-Owner model in DEC-0009: each authenticated trader receives one personal tenant, sensitive credential and live-mode actions require passkey authorization, and eligibility is enforced per tenant. M4 must prove tenant isolation and credential controls before any production CEX order is submitted.

@@ -7,10 +7,10 @@
 | Product name | **Perpeto** (working public name; complete trademark, domain, app-store and social-handle clearance before commercial release) |
 | Mobile display name | **Perpeto** |
 | Internal technical slug | `funding-arb` (stable and independent of the eventual public name) |
-| Document version | 1.0 |
+| Document version | 1.1 |
 | Status | Implementation specification |
-| Last updated | 2026-07-13 |
-| Delivery model | One isolated private deployment per client |
+| Last updated | 2026-07-20 |
+| Delivery model | Shared operator-managed VPS with one personal tenant per trader |
 | Backend | Rust |
 | Mobile client | React Native with Expo, iOS and Android |
 | Initial venues | Binance, Bybit, OKX, dYdX, Hyperliquid |
@@ -24,12 +24,12 @@
 
 ## 1. Executive summary
 
-The product is a private, production-grade system that discovers, opens, manages, and closes market-neutral funding-rate arbitrage positions. It supports:
+The product is a multi-user, production-targeted system that discovers, opens, manages, and closes market-neutral funding-rate arbitrage positions. One operator-managed VPS serves independent consumer traders; each trader has one personal tenant and connects only their own exchange accounts. It supports:
 
 1. **Spot versus perpetual:** normally long spot and short a positive-funding perpetual; reverse cash-and-carry is allowed only when a connector confirms short-borrow inventory and cost.
 2. **Perpetual versus perpetual:** long the leg with the cheaper funding obligation and short the leg with the richer funding receipt, either across venues or between compatible products on one venue.
 
-The execution engine runs on a VPS close to the chosen exchange endpoints. The mobile application is an operations, monitoring, configuration, and approval client; it never runs trading logic or stores exchange credentials.
+The execution engine runs on a VPS close to the chosen exchange endpoints. The mobile application is an operations, monitoring, configuration, credential-enrollment, and approval client; it never runs trading logic and does not retain exchange credentials after enrollment. Server-side automation continues while the phone is offline.
 
 The first release integrates Binance, Bybit, OKX, dYdX, and Hyperliquid through a normalized adapter layer. CEX spot and linear stablecoin-settled perpetuals are in scope. dYdX and Hyperliquid provide perpetual legs in v1. Inverse contracts, dated futures, options, and DEX spot are extension points, not v1 trading instruments.
 
@@ -41,12 +41,13 @@ The first release integrates Binance, Bybit, OKX, dYdX, and Hyperliquid through 
 - Keep a durable, auditable record of every decision, order intent, fill, funding payment, risk event, and operator action.
 - Protect capital with layered pre-trade, in-trade, venue, portfolio, and operational controls.
 - Provide clear mobile visibility into opportunity quality, current risk, realized PnL, system health, and actions requiring approval.
-- Support isolated repeatable deployments for different clients without implementing shared SaaS tenancy.
+- Safely serve many independent traders from one shared control plane using personal tenants, database row-level security, tenant-scoped secrets and per-tenant risk controls.
 
 ### 1.2 Non-goals for v1
 
 - Directional trading, market making, options arbitrage, dated-futures basis trading, or statistical pairs trading.
-- Custody of third-party customer money or a shared multi-tenant trading service.
+- Custody or possession of third-party customer money. Funds remain in each trader's own exchange account.
+- Team tenants, shared portfolios, social/copy trading, broker custody, or operator-initiated transfers.
 - Latency-sensitive co-location or high-frequency trading guarantees.
 - Automatic CEX withdrawals. CEX credentials must not have withdrawal permission.
 - Telegram or Discord trade commands. Those channels are notifications only.
@@ -66,34 +67,32 @@ The first release integrates Binance, Bybit, OKX, dYdX, and Hyperliquid through 
 
 ## 2. Users, roles, and operating model
 
-Each deployment represents one organization and one trading portfolio. It may contain multiple users but shares no runtime, database, secrets, or infrastructure with another client.
+One shared deployment represents the Perpeto platform. Each trader receives one personal tenant and one independently controlled portfolio. Teams and shared tenant membership are deferred. Public market data and connector certification may be platform-scoped; all private account, credential, strategy, order, position, risk, PnL, alert and audit state is tenant-scoped.
 
 | Role | Permissions |
 |---|---|
-| Owner | Full configuration, user/device management, credential management, live-mode enablement, approvals, trading, audit export |
-| Trader | View all trading data; create, pause, resume, and close strategies within assigned limits; cannot reveal or replace secrets |
-| Approver | Review and approve/reject rebalancing and high-risk actions; cannot edit strategies unless also a Trader |
-| Viewer | Read-only dashboards, positions, analytics, alerts, and health |
+| Owner (Trader) | Controls their personal tenant, devices, credentials, limits, strategies, live arming, trading and audit export |
+| Platform Operator | Operates infrastructure, releases, global breakers and incident response; cannot retrieve plaintext trader credentials through product APIs |
 
 Rules:
 
-- The first Owner is created with a one-time bootstrap token generated by the deployment CLI and invalidated after use.
-- TOTP MFA is mandatory for Owner, Trader, and Approver roles. Recovery codes are single-use and stored hashed.
-- Interim exception (DEC-0009): the shared v1 backend may run with `PERPETO_OPEN_REGISTRATION` enabled, which admits each new social sign-in immediately to full access without pending approval or MFA. Version 2 isolates each user's backend and restores the gated approval and mandatory-MFA rules above.
-- Biometrics only unlock a locally stored mobile refresh credential; they do not replace server-side MFA for step-up actions.
-- Live-mode enablement, emergency-limit increases, secret changes, and capital-movement approvals require recent step-up authentication.
-- Default approval quorum is one Owner or Approver with TOTP. A deployment may require two distinct approvers above a configured amount.
+- Google or Apple sign-in creates one personal tenant for a new trader. Paper mode may be publicly available without granting platform administration or live eligibility.
+- A registered device passkey is required for credential enrollment, rotation and revocation, live arming/disarming, emergency-limit increases and other high-risk tenant actions.
+- The passkey authorizes the action but is not the exchange-secret encryption key. Unattended server execution must continue while the phone is offline.
+- Platform operators use separate infrastructure identities and cannot trade as a tenant through ordinary administration paths.
+- DEC-0012 supersedes DEC-0009's interim universal-Owner registration model. Production live access is always a separate, per-tenant eligibility decision.
+- A second approver/quorum model is deferred because each initial tenant has one trader; destructive platform operations retain an operator break-glass procedure and audit trail.
 
 ### 2.1 Core user journeys
 
-1. Deploy the platform and bootstrap the first Owner.
-2. Connect venue accounts, verify permissions, import instruments/fees, and complete a connection test.
+1. Install the app, authenticate, create a personal tenant, register a passkey, and begin in paper mode.
+2. Connect venue accounts with read-and-trade-only credentials, verify permissions, import instruments/fees, and complete account preflight.
 3. Select paper mode, configure portfolio/risk defaults, and enable eligible strategy routes.
 4. Observe scanner results and inspect the complete yield and risk breakdown.
 5. Start a strategy manually or permit an approved strategy template to auto-enter.
 6. Monitor coordinated opening, funding capture, hedge drift, PnL, and venue health.
 7. Receive alerts and intervene, pause, or unwind when necessary.
-8. Review a rebalancing proposal, perform any CEX withdrawal externally, or approve and externally sign an allowlisted DEX-wallet transfer.
+8. Review a rebalancing proposal and perform any CEX withdrawal or transfer externally in the exchange UI.
 9. Export audit, order, fill, funding, transfer, and PnL records.
 
 ---
@@ -531,6 +530,7 @@ Approvals bind SHA-256 of an RFC 8785-canonical JSON payload containing every ex
 ### 8.1 Architecture principles
 
 - PostgreSQL is the durable source of truth. Redis accelerates ephemeral coordination, caches, and live fan-out but must be rebuildable.
+- Every private read and mutation carries an authenticated tenant context. Tenant-owned PostgreSQL tables use forced row-level security; repositories, jobs, cache keys, locks, idempotency namespaces and event channels are tenant-scoped.
 - The execution engine is a single active leader per deployment. A PostgreSQL-backed lease carries a monotonically increasing fencing epoch, but the venue cannot enforce that epoch: the engine verifies lease renewal before every external side effect, stops submissions immediately on database/renewal loss, and marks already in-flight calls unknown. A successor waits the full old lease TTL and reconciles every affected account before promotion.
 - Market data, account streams, strategy evaluation, execution, and reconciliation run server-side even when all clients are disconnected.
 - Venue details stop at the connector boundary. Domain and strategy code consume normalized types and capabilities.
@@ -546,9 +546,12 @@ flowchart LR
     Mobile[Expo React Native App] -->|TLS REST + WebSocket| API[funding-arb-api]
     API --> PG[(PostgreSQL)]
     API --> Redis[(Redis)]
+    API --> Vault[HashiCorp Vault Transit]
     Engine["funding-arb-engine<br/>leader"] --> PG
     Engine --> Redis
     Reconciler[funding-arb-reconciler] --> PG
+    Engine --> Vault
+    Reconciler --> Vault
     Worker[funding-arb-worker] --> PG
     Signer["funding-arb-signer<br/>no network"] --> Engine
     Worker --> Redis
@@ -570,6 +573,8 @@ flowchart LR
 | `funding-arb-worker` | Outbox dispatch, alerts, reports/exports, historical imports, analytics aggregation, cleanup | One instance initially; jobs use DB leases for later scaling |
 | `funding-arb-signer` | Sign allowlisted DEX trading actions through a local Unix/named-pipe interface; no network or transfer actions | One instance per delegated key/account; never horizontally shared |
 | `funding-arb-migrate` | One-shot SQLx database migrations and compatibility checks | Runs once before app services during deploy |
+
+The API receives an encrypt-only Vault policy for credential enrollment. Execution and reconciliation workloads receive purpose-limited decrypt policies for eligible tenant credential records. No application service receives Vault root credentials or unseal shares. See `ARCHITECTURE.md` and `KEY_MANAGEMENT.md` for the normative trust boundaries.
 
 The Rust workspace produces separate binaries from shared crates. Connector tasks are supervised inside the engine; a task failure degrades only its venue where possible, while repeated panics fail the process and rely on Docker restart plus startup reconciliation.
 
@@ -785,6 +790,8 @@ These requirements supplement, not replace, the current official venue documenta
 - `NUMERIC(38,18)` for financial values and `JSONB` only for raw venue payloads/config snapshots that are also represented by typed columns.
 - Append-only accounting, fill, funding, audit, and risk-event tables.
 - Optimistic concurrency through a `version` column on mutable aggregates.
+- A non-null `tenant_id` on every tenant-owned row, included in foreign keys and unique/idempotency constraints. The authenticated session is authoritative; clients cannot choose an arbitrary tenant context.
+- Forced PostgreSQL row-level security for tenant tables. Service transactions set a database-local tenant identifier, and missing context fails closed; application roles cannot bypass policies.
 - Monthly partitions for high-volume observations, events, audit records, and PnL snapshots; retention policies archive before deletion.
 - Encrypt secrets before they reach SQLx; never log a secret-bearing request.
 
@@ -792,13 +799,13 @@ These requirements supplement, not replace, the current official venue documenta
 
 | Table | Important fields / purpose |
 |---|---|
-| `organizations` | Single deployment identity, base currency, live-arm state, hard-limit version |
-| `users`, `roles`, `user_roles` | Perpeto identity, `PENDING`/active/deleted status, permissions and version; no password credential |
+| `tenants` | Personal tenant identity, base currency, live eligibility/arm state, hard-limit version and lifecycle |
+| `users`, `tenant_memberships`, `roles` | Perpeto identity, personal-tenant ownership, platform-operator separation, status and permission version; no password credential |
 | `provider_identities`, `social_challenges`, `bootstrap_state` | Google/Apple immutable subjects, one-use state/nonce/PKCE challenges and first-Owner bootstrap |
 | `mfa_methods`, `recovery_codes` | Encrypted TOTP seed, hashed one-use codes |
-| `sessions`, `devices` | Rotating refresh-token families, revocation, device/app metadata |
+| `sessions`, `devices`, `passkey_credentials`, `passkey_challenges` | Rotating sessions, revocation, device/app metadata and WebAuthn authorization evidence |
 | `venue_accounts` | Venue, alias, environment, account/subaccount/wallet identity, capability and certification state |
-| `encrypted_credentials` | SecretStore reference/ciphertext, key version, masked metadata, rotation dates; never plaintext |
+| `encrypted_credentials` | Tenant-bound Vault Transit ciphertext, key/version reference, masked metadata, validation and rotation dates; never plaintext |
 | `instruments`, `instrument_mappings` | Venue specifications and reviewed canonical-underlying mappings |
 | `fee_schedules` | Account/instrument maker/taker/borrow fee observations with validity window |
 | `funding_observations` | Raw and normalized rates/premiums, interval, source timestamps |
@@ -893,6 +900,8 @@ Error `details` must be redacted and safe for the caller's role.
 
 ### 10.2 Authentication and users
 
+The table includes current transitional bootstrap, approval and TOTP endpoints as well as the M4 passkey addition. Transitional role/MFA endpoints do not confer M4 live eligibility and may be retired only through a versioned compatibility change.
+
 | Method/path | Purpose |
 |---|---|
 | `POST /api/v1/auth/social/challenges` | Create a short-lived, one-use provider state/nonce/PKCE challenge |
@@ -903,6 +912,7 @@ Error `details` must be redacted and safe for the caller's role.
 | `POST /api/v1/auth/mfa/recovery-codes/acknowledge` | Bind acknowledgement of the new recovery-code set before privileged activation |
 | `POST /api/v1/auth/refresh` | Rotate a refresh token once and issue a 15-minute access token |
 | `POST /api/v1/auth/step-up` | Issue a five-minute proof bound to a named sensitive action |
+| `GET/POST/DELETE /api/v1/auth/passkeys...` | Register, list and revoke platform passkeys using fresh WebAuthn challenges |
 | `POST /api/v1/auth/logout` / `GET /api/v1/auth/me` | Revoke current session / read minimal caller status |
 | `GET /api/v1/auth/sessions` / `DELETE /api/v1/auth/sessions/{id}` | List/revoke devices and sessions |
 | `GET/POST/DELETE /api/v1/auth/identities...` | Explicitly list, link, and unlink social identities |
@@ -910,7 +920,7 @@ Error `details` must be redacted and safe for the caller's role.
 | `DELETE /api/v1/account` | Revoke credentials/sessions, erase PII, and pseudonymize retained audit references |
 | `POST /api/v1/auth/apple/notifications` | Verify and process Apple account-change notifications idempotently |
 
-Perpeto supports Google and Apple identity only. It has no password, magic-link, phone, or guest authentication. New social identities create isolated `PENDING` users that can access only their status, logout, provider-linking, and deletion flows. Approval grants Viewer; Owner, Trader, and Approver roles remain inactive until TOTP confirmation and recovery-code acknowledgement. Authentication exchange returns exactly one of `PENDING_APPROVAL`, `MFA_REQUIRED`, `MFA_ENROLLMENT_REQUIRED`, or `AUTHENTICATED`.
+Perpeto supports Google and Apple identity only. It has no password, magic-link, phone, or guest authentication. A first sign-in creates one personal tenant and paper-mode access. Live eligibility is not implied by authentication or registration. A platform passkey is required before exchange credentials or live controls become available.
 
 Recovery codes are returned once. Acknowledgement binds the lowercase SHA-256 digest of the UTF-8 compact JSON code array in its issued order to the enrollment challenge; the server compares it to its own code-set digest before activating a privileged role.
 
@@ -920,7 +930,7 @@ Apple authorization codes and ID tokens are verified server-side for signature, 
 
 Access tokens are Ed25519-signed JWTs with deployment-specific issuer/audience, `sub`, `jti`, session ID, roles/permission version, `iat`, `nbf`, `exp` and `kid`; they expire after 15 minutes and remain in app memory. Publish only public verification keys internally and support current/previous keys during audited rotation. Mutations also verify the session is active and its permission version is current, allowing immediate revocation. Refresh tokens are rotating, one-use, device-bound opaque 256-bit values stored hashed server-side and in mobile Secure Store. Reuse revokes the token family and raises a security alert.
 
-A step-up proof is an opaque random value stored hashed server-side and bound to session, action, resource ID/version and—when relevant—proposal/command digest. It expires after five minutes. Credential changes, transfer approvals, destination changes and global flatten consume it once; less destructive actions may reuse it only within the exact bound action and expiry.
+A step-up proof is an opaque random value stored hashed server-side and bound to tenant, session, verified passkey ceremony, action, resource ID/version and—when relevant—proposal/command digest. It expires after five minutes. Credential changes, live arming/disarming and flatten consume it once; less destructive actions may reuse it only within the exact bound action and expiry.
 
 ### 10.3 Venue and portfolio endpoints
 
@@ -930,8 +940,10 @@ A step-up proof is an opaque random value stored hashed server-side and bound to
 | `GET /venue-accounts` | Connected accounts, masked identity, permissions, certification and health |
 | `POST /venue-accounts` | Submit a one-time credential payload to the vault and create an account |
 | `POST /venue-accounts/{id}/test` | Test auth, permissions, account mode, signing and market data |
+| `POST /venue-accounts/{id}/preflight` | Run permission, account-mode, private-stream, reconciliation and shadow eligibility checks |
 | `POST /venue-accounts/{id}/rotate-credentials` | Replace a secret after step-up; old version is revoked after validation |
 | `POST /venue-accounts/{id}/disable` | Block new risk while preserving management of existing positions |
+| `POST /venue-accounts/{id}/arm-live` | Consume passkey step-up and typed confirmation to arm an eligible account/route |
 | `DELETE /venue-accounts/{id}` | Disable and tombstone only when no active dependency exists; retained ledgers/audits keep the immutable account identity |
 | `GET /portfolio` | Reconciled equity, allocation, delta, margin, reserves and freshness |
 | `GET /portfolio/balances` | Per-venue/per-asset balances and state |
@@ -1045,7 +1057,8 @@ Implementation baseline:
 - `@shopify/restyle` for typed semantic design tokens and reusable primitives; `victory-native`/React Native Skia for accessible chart rendering, pinned to mutually compatible releases.
 - A decimal library for display formatting only. API financial fields remain decimal strings; mobile calculations are never authoritative.
 - Redacted read models use `react-native-mmkv` encryption with a random 256-bit per-install cache key stored in Secure Store and a maximum 24-hour TTL. The cache excludes full addresses, account IDs, raw orders/fills and credentials; logout, recovery or remote revocation destroys the key and cache.
-- No exchange secret, wallet key, signing seed, raw credential response, or unrestricted download URL may be stored on the device.
+- No exchange secret, wallet key, signing seed, raw credential response, or unrestricted download URL may be retained on the device. Credential forms are ephemeral, excluded from analytics/crash capture/screenshots/clipboard, and cleared on background, timeout, cancellation and completion.
+- Platform passkeys are created and used through the operating-system credential provider. They authorize server actions but cannot retrieve or decrypt an enrolled exchange secret.
 
 Suggested frontend structure:
 
@@ -1090,7 +1103,7 @@ Server-side authorization is authoritative. Route guards also enforce login, onb
 #### Splash and deployment binding
 
 - Restore session, validate API/schema compatibility, compare minimum app version, fetch server time and minimal health.
-- Production builds are provisioned for one deployment URL and two SHA-256 SPKI pins (current and offline backup) through a native Expo development-build module. Endpoint switching exists only in staging/debug builds.
+- Production builds are provisioned for the public shared deployment URL and two SHA-256 SPKI pins (current and offline backup) through a native Expo development-build module. Endpoint switching exists only in staging/debug builds.
 - Route to sign-in, device lock, onboarding, main app, maintenance, or required-update screen.
 
 #### Sign in
@@ -1112,19 +1125,19 @@ Server-side authorization is authoritative. Route guards also enforce login, onb
 
 #### First-run onboarding
 
-1. Welcome, deployment identity, pending-approval state, or one-use first-Owner bootstrap token.
-2. Mandatory TOTP enrollment and recovery-code acknowledgement for Owner, Trader, and Approver.
-3. Optional biometrics and push enrollment.
-4. Owner-only venue connection wizard.
+1. Welcome, platform identity, terms/risk acknowledgement and personal-tenant creation.
+2. Platform passkey registration and recovery explanation.
+3. Optional local biometric lock and push enrollment.
+4. Passkey-authorized venue connection wizard with ephemeral credential fields.
 5. Risk-profile review and paper-mode configuration.
 6. Telegram/Discord/push notification setup and test.
 7. Trading, liquidation, venue, smart-contract, stablecoin, and custody risk acknowledgement.
-8. Readiness checklist. Live mode remains locked until backend certification passes; activation requires Owner step-up and typed `ENABLE LIVE` confirmation.
+8. Readiness checklist. Live mode remains locked until connector certification and this account's preflight pass; activation requires a fresh passkey step-up and typed `ENABLE LIVE` confirmation.
 
 #### Access approval and identity management
 
-- Open registration remains `PENDING` until an Owner approves it; pending accounts cannot access portfolio, position, analytics, alert, audit, or system-health data.
-- Owner approval initially grants Viewer. Invitations and comprehensive role administration are deferred to a later M1 slice.
+- Public registration grants only a personal tenant and paper access. It never grants platform administration or live eligibility.
+- Team invitations and shared-portfolio role administration are deferred.
 - Settings list Apple/Google identities, support explicit fresh-auth linking, and prohibit unlinking the final provider.
 - Session settings list device name and last use, support remote revocation, logout, and in-app deletion. The final Owner must transfer ownership before deletion.
 
@@ -1138,7 +1151,7 @@ Display:
 - absolute and percentage residual delta;
 - margin utilization and closest liquidation buffer;
 - next funding event and countdown using server time;
-- equity/funding chart, active positions, best eligible opportunities, strategy state, venue health, pending approvals, and critical alerts.
+- equity/funding chart, active positions, best eligible opportunities, strategy state, venue health, account-readiness actions, and critical alerts.
 
 Quick actions open Scanner, create Strategy, review Rebalancing, or pause new entries. Every value has a currency, source timestamp, freshness state, and masking behavior. Partial data is labeled per venue rather than silently rolled into a complete-looking total.
 
@@ -1405,6 +1418,7 @@ Deduplicate by alert fingerprint, group repeats, record every delivery attempt, 
 
 Protect against:
 
+- cross-tenant reads, commands, cache collisions and confused-deputy effects;
 - stolen mobile credentials/session tokens;
 - compromised CEX trading keys used to create destructive positions;
 - DEX signer/key exfiltration or unauthorized action types;
@@ -1433,21 +1447,19 @@ The design cannot eliminate venue insolvency, smart-contract/oracle failure, cha
 
 ### 14.3 Secret vault
 
-Implement a `SecretStore` interface with envelope encryption:
+Implement `SecretStore` with an always-on HashiCorp Vault Transit backend:
 
-1. Generate a unique random data-encryption key per secret version.
-2. Encrypt the secret with an audited AEAD (XChaCha20-Poly1305 or AES-256-GCM) and associated data containing deployment, venue, account, purpose and version.
-3. Wrap the data key with a client-specific key-encryption key in a managed KMS/secret manager.
-4. Store only ciphertext, wrapped key, nonce, associated-data hash and key version in PostgreSQL.
+1. Create one non-exportable Transit key per opaque tenant identifier.
+2. Bind encryption context to tenant, venue account, credential record, purpose and schema version.
+3. Give the API encrypt-only access and eligible execution/reconciliation workloads narrow decrypt access. No application identity may manage arbitrary keys or use Vault root capabilities.
+4. Store only Vault ciphertext, tenant/key/version references, masked metadata and validation/rotation state in PostgreSQL.
+5. Initialize the first single-node Vault with a 2-of-3 Shamir unseal quorum. Keep shares and the initial root token out of application configuration, CI, backups and mobile storage; revoke the initial root token after bootstrap.
 
-Production profiles:
+A registered device passkey authorizes enrollment, rotation, revocation and live arming through a fresh, purpose-bound WebAuthn ceremony. It is not used to derive the Transit key: the server must supervise authorized positions and strategies while the phone is offline. The mobile app submits a credential only through a short-lived one-use enrollment operation, never receives it back, and clears its ephemeral form immediately.
 
-- **Managed KMS (recommended):** AWS KMS, GCP Cloud KMS, Azure Key Vault or a client-approved equivalent, accessed through a least-privilege machine identity.
-- **Manual unseal:** for independent VPS deployments without KMS, an Owner supplies the master key after boot over authenticated SSH. It remains memory-only; new trading is disabled after restart until unsealed. The unwrapped key is never persisted with the database or backup.
+Secrets must not be passed in command arguments or ordinary environment variables. Decrypt only immediately before connector authentication/signing; minimize lifetime and process scope, use secret-bearing types, and prohibit persistence in Redis, disk, traces, metrics, panic dumps, queues or error serialization.
 
-Secrets must not be passed in command arguments or ordinary environment variables. Authorized processes receive decrypted material through protected memory/local IPC. Use Rust `secrecy` and `zeroize`; prohibit `Debug`, tracing, panic-dump and error serialization of secret-bearing types.
-
-Audit creation, decryption purpose, rotation, revocation and failures without logging values. Credential input endpoints use `no-store`; application logs and support bundles run deterministic secret redaction.
+Audit creation, decryption purpose, rotation, revocation and failures without logging values. Credential endpoints use `no-store`; application logs and support bundles run deterministic secret redaction. When Vault is sealed or unavailable, reject credential changes and new live risk. Paper/public monitoring may continue, while reconciliation and risk reduction proceed only when already established access makes them safe. `KEY_MANAGEMENT.md` is normative for lifecycle and recovery behavior.
 
 ### 14.4 DEX signer isolation
 
@@ -1468,7 +1480,7 @@ External capital movement is never signed by this trading signer. It uses the Ow
 
 - TLS 1.2+ with modern ciphers and HSTS. Automated certificate renewal retains the gateway key/SPKI; any key replacement follows the two-pin native mobile release sequence in section 11.16.
 - Password credentials are prohibited. Google and Apple proof verification fails closed on signature, issuer, audience, expiry, state, nonce, subject, code-replay, or provider-key-refresh failure.
-- Mandatory TOTP MFA for Owner, Trader, and Approver; replay-resistant timestep tracking, lockout, one-use hashed recovery codes, rotating device-bound refresh tokens, and session/device revocation.
+- Phishing-resistant passkey step-up for credential and live-risk actions, with rotating device-bound refresh tokens, session/device revocation, challenge replay protection and an audited account-recovery policy. Existing TOTP support is transitional, not sufficient by itself for M4 credential enrollment or live arming.
 - RBAC enforced in domain command handlers, not only HTTP middleware.
 - CSRF is not applicable to bearer-only mobile APIs, but any future cookie/web console must add origin and CSRF protections.
 - Strict request size, schema, rate and concurrency limits; generic authentication errors; lockout/risk alerts for abuse.
@@ -1504,9 +1516,9 @@ Maintain three isolated environments:
 |---|---|---|
 | Local development | Unit/integration development with fixtures and simulators | No production secrets or copied production data |
 | Staging/paper | Live public data, sandboxes/testnets, paper execution, mobile release candidates | Separate test accounts and keys |
-| Production | Certified live trading only | Dedicated production accounts, secrets, wallets, database and backup bucket |
+| Production | Certified limited live trading for eligible personal tenants only | Trader-owned dedicated accounts, tenant Vault ciphertext, shared RLS database and isolated production backups |
 
-No database, Redis, domain, secret, wallet, cloud project, volume or backup path is shared between client deployments or environments.
+No database, Redis, domain, secret, wallet, cloud project, volume or backup path is shared between environments. Within production, tenant data shares infrastructure but is logically isolated through tenant authorization, forced RLS, tenant-scoped namespaces and distinct Vault Transit keys.
 
 ### 15.2 VPS profile and region
 
@@ -1527,6 +1539,7 @@ Choose region from a 24-hour probe of each enabled venue's public/private-repres
 
 ```text
 caddy                    TLS reverse proxy; only public host ports 80/443
+vault                     Transit encryption; manually unsealed 2-of-3 for initial M4 topology
 funding-arb-api           Axum API and mobile WebSocket
 funding-arb-engine        Sole active execution leader
 funding-arb-reconciler    Independent venue/account reconciliation
@@ -1560,9 +1573,9 @@ Only Caddy exposes a public port. PostgreSQL, Redis, Grafana, metrics, logs, sig
 
 ### 15.5 Network and DNS
 
-- One deployment subdomain such as `trade.client-domain.example`; no public admin endpoints.
+- One public service domain such as `api.perpeto.example`; no public infrastructure-admin endpoints.
 - Caddy terminates TLS and proxies only documented API/health routes.
-- Apply IP/rate limits to login and bootstrap; bootstrap endpoint disables after first Owner.
+- Apply IP/rate limits to login, account creation, passkey challenges and legacy bootstrap; the legacy bootstrap endpoint remains disabled after its one-time use and is removed from the M4 live path.
 - Restrict egress where operationally feasible to venue domains/IP sets, KMS, object storage, push, Telegram/Discord and required package/time services. Because exchange IP ranges change, changes require monitored rollout rather than brittle silent blocking.
 - Configure DNS TTL and certificate rotation so the required native mobile build with current/backup SPKI pins reaches supported devices before infrastructure key changes.
 
@@ -1610,7 +1623,7 @@ notifications:
   heartbeat_minutes: 5
 ```
 
-Required environment/secret references—not secret values—include database URL file, Redis URL, master-key/KMS reference, access-token signing-key reference, venue credential references, signer socket paths, push credentials, Telegram token/chat, Discord webhook, object-storage target and observability credentials.
+Required environment/secret references—not secret values—include database URL file, Redis URL, Vault address/auth-policy references, access-token signing-key reference, signer socket paths, push credentials, Telegram token/chat, Discord webhook, object-storage target and observability credentials. Exchange credentials are never deployment environment variables.
 
 ### 15.7 Health and startup
 
@@ -1623,7 +1636,7 @@ Every Rust service exposes:
 
 Engine startup is fail-closed:
 
-1. Load configuration and unseal required secrets.
+1. Load configuration; remain degraded until operators complete Vault's 2-of-3 unseal after a restart.
 2. Verify database/schema, Redis, clock and engine-version compatibility.
 3. Acquire the fenced leader lease with increasing epoch.
 4. Connect public/private venue streams and buffer new account events.
@@ -1780,8 +1793,8 @@ Contract tests run against fixtures in every CI build and against supported sand
 
 | Area | Required evidence |
 |---|---|
-| Isolation | No shared client DB, volume, secret, wallet, domain or backup namespace |
-| Credential safety | CEX keys IP-bound/withdrawal-disabled; no DEX master seed on VPS; permission validation passes |
+| Tenant isolation | Cross-tenant API, repository, forced-RLS, job, cache, idempotency, event and export tests deny access/effects |
+| Credential safety | CEX keys are withdrawal/transfer/admin-disabled and IP-bound where available; per-tenant Vault and passkey policy tests pass; no DEX master seed on VPS |
 | Secret leakage | Zero secrets in source, image, CI output, crash dump, metrics, logs and diagnostics |
 | Signer | Fuzz/property tests reject transfer/withdraw/arbitrary actions and nonce replay |
 | Entry safety | No entry with stale data, bad clock, unreconciled account, risk freeze or missing leader lease |
@@ -1809,7 +1822,7 @@ Certification requires:
 
 Certify one venue pair/strategy route at a time. One certified connector does not automatically certify every pair, asset, account mode or strategy direction.
 
-The product-level v1 release floor is one `CERTIFIED_LIVE` BTC or ETH perpetual route involving each of Binance, Bybit, OKX, dYdX and Hyperliquid in a controlled eligible reference deployment; Binance/Bybit/OKX must additionally certify their spot leg used for cash-and-carry. An individual client deployment enables only venues/routes for which that client is eligible and has completed its own account-level pilot.
+Platform certification applies to connector code and a specific venue/route; it is not repeated from scratch for every trader. A personal tenant enables only platform-certified routes for which its connected account separately passes permission, account-mode, private-stream, reconciliation and shadow preflight, then receives explicit live eligibility and passkey-authorized arming. The M4 release floor is at least one `PILOT` BTC or ETH route on a certified Binance, Bybit or OKX connector for a controlled cohort. `CERTIFIED_LIVE` and broader rollout begin only in M7 after M6 hardening evidence is accepted. DEX certification belongs to M5.
 
 ---
 
@@ -1874,23 +1887,29 @@ Never canary two live execution engines against the same account. Rollback resto
 
 - Binance, Bybit and OKX adapters with sandbox, account, order, private stream, reconciliation and fee/funding ledgers.
 - Venue onboarding/health, strategy automation, analytics and notifications.
-- Certify connectors individually through paper/shadow/pilot stages.
+- Certify connector behavior individually through contract, sandbox and read-only shadow stages; production account pilots begin only after M4 tenant and credential controls pass.
 
-### Phase 4 — DEX connectors and signer
+### Phase 4 — Shared-VPS multi-user CEX pilot
+
+- Add personal tenants, tenant-scoped repositories and forced PostgreSQL row-level security across all private data/effects.
+- Add platform passkeys, Vault Transit per-tenant credentials, audited enrollment/rotation/revocation and 2-of-3 manual unseal/recovery.
+- Separate platform connector certification from per-account preflight, eligibility and explicit live arming; run a limited `PILOT` CEX cohort.
+
+### Phase 5 — DEX connectors and signer
 
 - dYdX indexer/node connector and permissioned signer.
 - Hyperliquid info/WebSocket/exchange connector and agent wallet signer.
 - Chain/indexer/nonce failure handling, DEX gas/fee accounting and external-wallet transfer tracking.
 
-### Phase 5 — Treasury, production operations, and hardening
+### Phase 6 — Treasury, production operations, and hardening
 
 - Allocation, compounding, internal rebalancing and approval-bound external proposals.
 - Complete deployment automation, backups/DR, security review, penetration test, runbooks and SLO dashboards.
 - iOS/Android store/internal distribution release, certificate pins, push and incident flows.
 
-### Phase 6 — Controlled live rollout
+### Phase 7 — Certified-live rollout
 
-- Read-only mainnet shadow, restricted BTC/ETH pilot, venue-pair certification and gradual capital increases.
+- Promote eligible M4 pilot routes to `CERTIFIED_LIVE` only after M6 evidence is accepted, then broaden venue-by-venue availability and capital gradually.
 - Increase capital by no more than 2× in any seven-day period.
 - Enable auto-compounding only after at least 30 incident-free live days and Owner approval.
 
@@ -1902,7 +1921,8 @@ Any unexplained order, position, transfer, signer or accounting discrepancy retu
 
 The v1 system is complete only when:
 
-- all five venue adapters meet the product-level certification floor in section 17.6, and every client-enabled route has an explicit account-level certification state;
+- the enabled connector routes meet their milestone-specific platform certification floor and every live tenant/account has explicit preflight, eligibility and arm evidence;
+- tenant authorization, forced RLS, tenant-scoped background work, passkeys and per-tenant Vault credential lifecycle pass the M4 security and recovery gates;
 - spot–perpetual and perpetual–perpetual strategies execute through one durable state machine;
 - funding ranking uses actual fees and conservative executable costs;
 - partial fills, unknown outcomes and restarts cannot duplicate orders or leave silent exposure;
@@ -1929,6 +1949,8 @@ The v1 system is complete only when:
 - Indexers may lag chain truth; adapters reconcile authoritative state before retrying.
 - CEX withdrawal-disabled credentials conflict with fully automatic cross-exchange transfers by design. The platform proposes and tracks external movement but does not bypass approval/custody controls.
 - Dedicated accounts/subaccounts are required for reliable automated ownership and reconciliation.
+- The first multi-user production topology accepts one VPS as a shared host failure and compromise domain. RLS and Vault reduce application-layer exposure but do not eliminate a malicious root operator or full host compromise; M6 owns stronger infrastructure isolation and availability.
+- A passkey authorizes credential and live-risk actions but cannot be the persistent server decryption root because automation must continue while the trader's phone is offline.
 - Funding prediction is probabilistic and cannot guarantee a payment.
 - V1 supports stablecoin-settled linear perpetuals. Inverse contracts and dated futures require separate implementation/certification.
 - **Perpeto** remains a working public name until trademark, domain, app-store and social-handle clearance is complete; venue eligibility and regulatory review also remain pre-launch business decisions.
