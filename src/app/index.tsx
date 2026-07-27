@@ -324,6 +324,7 @@ function CredentialEnrollmentCard() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [done, setDone] = useState<string>();
+  const [enrolled, setEnrolled] = useState<{ readonly id: string; readonly product: string }>();
 
   const enroll = async () => {
     setBusy(true);
@@ -340,11 +341,26 @@ function CredentialEnrollmentCard() {
         credential: { api_key: apiKey, api_secret: apiSecret },
       });
       setDone(`Enrolled ${account.masked_identity}. Preflight pending.`);
+      setEnrolled({ id: account.id, product: fields.product });
       setAlias("");
       setApiKey("");
       setApiSecret("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Enrollment failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const preflight = async () => {
+    if (enrolled === undefined) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      const report = await controller.client.runPreflight(enrolled.id, { product: enrolled.product });
+      setDone(`Preflight ${report.status.replaceAll("_", " ")}.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Preflight failed.");
     } finally {
       setBusy(false);
     }
@@ -401,6 +417,9 @@ function CredentialEnrollmentCard() {
         value={apiSecret}
       />
       <Button disabled={!ready || busy} label={busy ? "Enrolling…" : "Enroll (testnet)"} onPress={() => void enroll()} />
+      {enrolled === undefined ? null : (
+        <Button disabled={busy} label={busy ? "Running preflight…" : "Run preflight"} onPress={() => void preflight()} />
+      )}
     </Card>
   );
 }
