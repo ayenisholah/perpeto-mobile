@@ -11,3 +11,13 @@ export function passkeysEnabled(
 ): boolean {
   return value?.trim().toLowerCase() === "true";
 }
+
+/**
+ * The owner-only audit review card. Ships dark until the control-plane audit log
+ * has real content on a provisioned environment.
+ */
+export function auditEnabled(
+  value = process.env.EXPO_PUBLIC_AUDIT_ENABLED,
+): boolean {
+  return value?.trim().toLowerCase() === "true";
+}

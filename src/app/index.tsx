@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import type {
   AccessRequest,
+  AuditLog,
   Alert as ApiAlert,
   Controls,
   ConnectorAccounting,
@@ -48,7 +49,7 @@ import { createPasskeyCredential, getPasskeyAssertion } from "@/auth/passkeys";
 import { GlassSurface } from "@/components/GlassSurface";
 import { exitReasonLabel, wasRehedged } from "@/components/positionPresentation";
 import { ProviderButton } from "@/components/ProviderButton";
-import { passkeysEnabled } from "@/config/featureFlags";
+import { auditEnabled, passkeysEnabled } from "@/config/featureFlags";
 import { themes, type Theme } from "@/theme/tokens";
 
 const markDark = require("../../assets/brand/mark-dark.png");
@@ -540,6 +541,7 @@ function SecurityCenter() {
   const [sessions, setSessions] = useState<readonly Session[]>([]);
   const [identities, setIdentities] = useState<readonly LinkedIdentity[]>([]);
   const [requests, setRequests] = useState<readonly AccessRequest[]>([]);
+  const [audit, setAudit] = useState<AuditLog>();
   const [linkTotp, setLinkTotp] = useState("");
   const [error, setError] = useState<string>();
   const theme: Theme = useColorScheme() === "light" ? themes.light : themes.dark;
@@ -554,6 +556,7 @@ function SecurityCenter() {
     setSessions(nextSessions);
     setIdentities(nextIdentities);
     if (owner) setRequests(await controller.client.listAccessRequests());
+    if (owner && auditEnabled()) setAudit(await controller.client.getAuditLog());
   }, [controller, owner]);
 
   useEffect(() => {
@@ -632,6 +635,20 @@ function SecurityCenter() {
             <View key={request.user_id} style={styles.row}>
               <Text maxFontSizeMultiplier={2} style={{ color: theme.textPrimary }}>{request.display_name ?? request.email ?? request.provider}</Text>
               <Button label="Approve Viewer" onPress={() => void run(() => controller.client.approveAccessRequest(request.user_id))} />
+            </View>
+          ))}
+        </Card>
+      )}
+      {!owner || !auditEnabled() || audit === undefined ? null : (
+        <Card>
+          <Text accessibilityRole="header" maxFontSizeMultiplier={2} style={[styles.sectionTitle, { color: theme.textPrimary }]}>Recent activity</Text>
+          <Text maxFontSizeMultiplier={2} style={{ color: audit.intact ? theme.signal : theme.critical }}>
+            {audit.intact ? "Audit chain verified" : "Audit integrity check FAILED"}
+          </Text>
+          {audit.events.length === 0 ? <Text style={{ color: theme.textSecondary }}>No recorded activity.</Text> : audit.events.slice(0, 8).map((entry) => (
+            <View key={entry.event_hash} style={styles.row}>
+              <Text maxFontSizeMultiplier={2} style={{ color: theme.textPrimary }}>{entry.event_type.replaceAll("_", " ")}</Text>
+              <Text maxFontSizeMultiplier={2} style={{ color: theme.textSecondary }}>{entry.occurred_at}</Text>
             </View>
           ))}
         </Card>
