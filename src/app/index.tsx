@@ -366,6 +366,26 @@ function CredentialEnrollmentCard() {
     }
   };
 
+  const remove = async () => {
+    if (enrolled === undefined) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      const challenge = await controller.client.startCredentialDeletion(enrolled.id);
+      const assertion = await getPasskeyAssertion(challenge.options);
+      await controller.client.finishCredentialDeletion(enrolled.id, {
+        challenge_id: challenge.challenge_id,
+        assertion,
+      });
+      setDone("Credential deleted.");
+      setEnrolled(undefined);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Deletion failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const ready =
     alias.trim().length > 0 && apiKey.trim().length > 0 && apiSecret.trim().length > 0;
 
@@ -419,6 +439,9 @@ function CredentialEnrollmentCard() {
       <Button disabled={!ready || busy} label={busy ? "Enrolling…" : "Enroll (testnet)"} onPress={() => void enroll()} />
       {enrolled === undefined ? null : (
         <Button disabled={busy} label={busy ? "Running preflight…" : "Run preflight"} onPress={() => void preflight()} />
+      )}
+      {enrolled === undefined ? null : (
+        <Button disabled={busy} label={busy ? "Deleting…" : "Delete credential"} onPress={() => void remove()} />
       )}
     </Card>
   );
