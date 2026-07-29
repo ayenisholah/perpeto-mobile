@@ -8,7 +8,7 @@ M2 paper features, their mobile monitoring surfaces and the lossless-decimal `0.
 
 ## Authoritative documents
 
-Read [PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md), [DECISION.md](docs/DECISION.md), [TRACEABILITY.md](docs/TRACEABILITY.md), [IMPLEMENTATION.md](docs/IMPLEMENTATION.md), and [AGENTS.md](AGENTS.md) before changing behavior.
+Read [PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md), [DECISION.md](docs/DECISION.md), [TRACEABILITY.md](docs/TRACEABILITY.md), [IMPLEMENTATION.md](docs/IMPLEMENTATION.md), and [ENGINEERING.md](docs/ENGINEERING.md) before changing behavior.
 
 ## Development
 

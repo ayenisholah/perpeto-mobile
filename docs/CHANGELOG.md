@@ -48,6 +48,8 @@
 
 ### Changed
 
+- Consolidated the contributor policy into `docs/ENGINEERING.md`, replacing the former root-level operating contract, and updated `README.md`, `scripts/check-docs.sh`, `scripts/check-shared-docs.sh`, and the shared-document drift workflow to reference the new path. The document remains owned by the backend repository and synchronized here.
+
 - Reconciled progress and traceability with current evidence: M2 mobile features are implemented but shared exact-decimal/device exit gates remain open; client 0.13 connector surfaces are present; M3 WebSocket/certification gates remain incomplete.
 
 - Expanded shared-document drift coverage to architecture/key-management sources, hardened nested dependency/cache exclusions, and updated deployment commands to the renamed `perpeto-mobile` GitHub repository.

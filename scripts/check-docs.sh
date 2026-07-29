@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(README.md AGENTS.md docs/PRODUCT_SPEC.md docs/OVERVIEW.md docs/ARCHITECTURE.md docs/KEY_MANAGEMENT.md docs/CHANGELOG.md docs/DECISION.md docs/IMPLEMENTATION.md docs/MILESTONE.md docs/PROGRESS.md docs/TRACEABILITY.md docs/TESTING.md docs/DEPLOYMENT.md .github/CONTRIBUTING.md .github/SECURITY.md)
+required=(README.md docs/ENGINEERING.md docs/PRODUCT_SPEC.md docs/OVERVIEW.md docs/ARCHITECTURE.md docs/KEY_MANAGEMENT.md docs/CHANGELOG.md docs/DECISION.md docs/IMPLEMENTATION.md docs/MILESTONE.md docs/PROGRESS.md docs/TRACEABILITY.md docs/TESTING.md docs/DEPLOYMENT.md .github/CONTRIBUTING.md .github/SECURITY.md)
 for file in "${required[@]}"; do
   test -s "$file" || { echo "missing required document: $file" >&2; exit 1; }
 done

@@ -5,7 +5,7 @@ on:
     paths:
       - docs/PRODUCT_SPEC.md
       - docs/OVERVIEW.md
-      - AGENTS.md
+      - docs/ENGINEERING.md
       - docs/DECISION.md
       - docs/MILESTONE.md
       - docs/ARCHITECTURE.md

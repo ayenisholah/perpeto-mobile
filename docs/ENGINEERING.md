@@ -1,6 +1,8 @@
-# Agent Operating Contract
+# Engineering Standard
 
-These rules apply to humans and automated coding agents.
+This document defines how changes are made across the Perpeto backend and mobile repositories. It is
+a shared document: the canonical copy lives in the backend repository and is synchronized to the
+mobile repository.
 
 ## Source precedence
 
@@ -19,7 +21,7 @@ Stop and request a decision when higher-priority sources conflict. Never silentl
 
 Before editing, identify the specification section, decision IDs, acceptance criteria, and affected risk boundary. Keep the change within one milestone-sized objective. After editing, run proportionate checks, update `docs/CHANGELOG.md`, and update `docs/TRACEABILITY.md`, `docs/PROGRESS.md`, `docs/MILESTONE.md`, or `docs/DECISION.md` when their facts changed.
 
-Never claim a command passed unless it ran. Record unavailable tooling or external dependencies as blockers. Do not convert missing behavior into a mocked success response.
+Never record a command as passing unless it ran. Record unavailable tooling or external dependencies as blockers. Do not convert missing behavior into a mocked success response.
 
 ## Non-negotiable invariants
 
@@ -36,9 +38,9 @@ Never claim a command passed unless it ran. Record unavailable tooling or extern
 - Mobile mutations are blocked while offline, stale, version-incompatible, or missing a current server preview.
 - Biometrics may unlock a stored refresh credential but never replace server-side step-up authentication.
 
-## Prohibited invention
+## Evidence and sourcing
 
-Do not invent exchange semantics, endpoints, payloads, funding signs, account modes, risk defaults, package versions, schema fields, completed tests, or operational evidence. Connector behavior must cite current official venue documentation and be captured in contract fixtures.
+Exchange semantics, endpoints, payloads, funding signs, account modes, risk defaults, package versions, and schema fields must come from an authoritative source rather than from assumption. Connector behavior must cite current official venue documentation and be captured in contract fixtures. Test results and operational evidence are recorded only from runs that actually happened.
 
 Do not weaken a test, risk gate, security boundary, or audit record to make CI pass. Do not add dependencies without documenting why the standard library or an existing dependency is insufficient.
 
