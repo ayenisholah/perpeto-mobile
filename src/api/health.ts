@@ -1,7 +1,13 @@
 export interface BackendHealth {
   readonly status: "OK";
   readonly mode: "PAPER";
-  readonly stage: "M0_SCAFFOLD";
+  /**
+   * The backend's current milestone, e.g. `M3_CONNECTORS`. Reported for display
+   * and not gated on: pinning it to one value rejected any backend that had
+   * advanced a milestone. `mode` stays gated, because reaching a non-paper
+   * backend is a safety condition rather than a version difference.
+   */
+  readonly stage: string;
 }
 
 export function resolveApiBaseUrl(value = process.env.EXPO_PUBLIC_API_URL): string {
@@ -33,6 +39,7 @@ export function isBackendHealth(value: unknown): value is BackendHealth {
   return (
     health.status === "OK" &&
     health.mode === "PAPER" &&
-    health.stage === "M0_SCAFFOLD"
+    typeof health.stage === "string" &&
+    health.stage.length > 0
   );
 }
