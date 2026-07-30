@@ -50,6 +50,8 @@
 
 - Stopped rejecting the backend for advancing a milestone. `isBackendHealth` required `stage` to equal `M0_SCAFFOLD`, but a running paper backend reports `M3_CONNECTORS`, so `getBackendHealth` would have thrown "Backend health contract is incompatible" against every current deployment. `stage` is now reported rather than gated; `status` and `mode` remain gated, because reaching a non-paper backend is a safety condition rather than a version difference. The helper is not yet wired into a screen, so nothing was visibly broken. Verified against a local backend: `GET /readyz` returns `{"status":"OK","mode":"PAPER","stage":"M3_CONNECTORS"}`.
 
+- Noted in `README.md` that an `address already in use` on 5432 when starting the local backend usually means a second Docker daemon holds the port, and that PostgreSQL stays bound to `127.0.0.1` because the app only ever talks to the API.
+
 - Documented running the app against a local backend in `README.md`: start PostgreSQL and the API from the backend checkout, point `EXPO_PUBLIC_API_URL` at the host's LAN address in `.env.local` (a device cannot reach `127.0.0.1`), and note that Expo Go excludes the native modules Google/Apple sign-in and passkeys need, so authenticated screens require an EAS development build.
 
 - Consolidated the contributor policy into `docs/ENGINEERING.md`, replacing the former root-level operating contract, and updated `README.md`, `scripts/check-docs.sh`, `scripts/check-shared-docs.sh`, and the shared-document drift workflow to reference the new path. The document remains owned by the backend repository and synchronized here.

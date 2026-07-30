@@ -33,7 +33,9 @@ docker compose -f deploy/compose/docker-compose.dev.yml up -d
 bash scripts/dev-run-api.sh
 ```
 
-The API binds `0.0.0.0:8080` and the script prints the host's LAN URL. Put that in `.env.local` (gitignored) — **not** `localhost`, because on a physical device `127.0.0.1` is the phone:
+If the first command reports `address already in use` on 5432, the usual cause is a second Docker daemon holding the port — see the local-development notes in the backend's `docs/DEPLOYMENT.md`.
+
+The API binds `0.0.0.0:8080` and the script prints the host's LAN URL. PostgreSQL stays bound to `127.0.0.1`; the app never talks to it directly. Put that in `.env.local` (gitignored) — **not** `localhost`, because on a physical device `127.0.0.1` is the phone:
 
 ```
 EXPO_PUBLIC_API_URL=http://<host-lan-ip>:8080
