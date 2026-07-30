@@ -11,12 +11,14 @@ import * as Crypto from "expo-crypto";
 import type { MfaEnrollment, SocialProvider } from "@ayenisholah/perpeto-api-client";
 
 import { AuthController } from "./controller";
-import { secureSessionStore } from "./sessionStore";
+import { platformSessionStore } from "./sessionStore";
 import { initialAuthState, reduceAuthState, type AuthState } from "./state";
 
 interface AuthContextValue {
   readonly state: AuthState;
   readonly signIn: (provider: SocialProvider) => Promise<void>;
+  /** Development sign-in for Expo Go; see `AuthController.signInDev`. */
+  readonly signInDev: () => Promise<void>;
   readonly bootstrap: (token: string) => Promise<void>;
   readonly verifyMfa: (code: string, recoveryCode: boolean) => Promise<void>;
   readonly beginMfaEnrollment: () => Promise<MfaEnrollment>;
@@ -35,7 +37,7 @@ function messageOf(error: unknown): string {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const controller = useMemo(() => new AuthController(secureSessionStore), []);
+  const controller = useMemo(() => new AuthController(platformSessionStore), []);
   const [state, dispatch] = useReducer(reduceAuthState, initialAuthState);
 
   const restore = useCallback(async () => {
@@ -57,6 +59,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const result = await controller.signIn(provider);
       if (result.cancelled) dispatch({ type: "CANCEL" });
       else dispatch({ type: "TRANSITION", transition: result.transition });
+    } catch (error) {
+      dispatch({ type: "FAIL", message: messageOf(error) });
+    }
+  }, [controller]);
+
+  // Dispatches the same events as `signIn`, so the state machine and every
+  // screen treat the resulting session identically to a provider sign-in.
+  const signInDev = useCallback(async () => {
+    dispatch({ type: "AUTHORIZE", provider: "GOOGLE" });
+    try {
+      const result = await controller.signInDev();
+      dispatch({ type: "TRANSITION", transition: result.transition });
     } catch (error) {
       dispatch({ type: "FAIL", message: messageOf(error) });
     }
@@ -114,6 +128,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(() => ({
     state,
     signIn,
+    signInDev,
     bootstrap,
     verifyMfa,
     beginMfaEnrollment,
@@ -123,7 +138,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     deleteAccount,
     retry: restore,
     controller,
-  }), [acknowledgeRecoveryCodes, beginMfaEnrollment, bootstrap, confirmMfaEnrollment, controller, deleteAccount, logout, restore, signIn, state, verifyMfa]);
+  }), [acknowledgeRecoveryCodes, beginMfaEnrollment, bootstrap, confirmMfaEnrollment, controller, deleteAccount, logout, restore, signIn, signInDev, state, verifyMfa]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

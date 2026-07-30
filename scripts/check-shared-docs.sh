@@ -3,7 +3,7 @@ set -euo pipefail
 
 : "${GITHUB_REPOSITORY_OWNER:?GITHUB_REPOSITORY_OWNER is required}"
 base="https://raw.githubusercontent.com/$GITHUB_REPOSITORY_OWNER/perpeto-backend/main"
-files=(docs/PRODUCT_SPEC.md docs/OVERVIEW.md AGENTS.md docs/DECISION.md docs/MILESTONE.md docs/ARCHITECTURE.md docs/KEY_MANAGEMENT.md)
+files=(docs/PRODUCT_SPEC.md docs/OVERVIEW.md docs/ENGINEERING.md docs/DECISION.md docs/MILESTONE.md docs/ARCHITECTURE.md docs/KEY_MANAGEMENT.md)
 temporary="$(mktemp -d)"
 trap 'rm -rf "$temporary"' EXIT
 

@@ -49,7 +49,7 @@ import { createPasskeyCredential, getPasskeyAssertion } from "@/auth/passkeys";
 import { GlassSurface } from "@/components/GlassSurface";
 import { exitReasonLabel, wasRehedged } from "@/components/positionPresentation";
 import { ProviderButton } from "@/components/ProviderButton";
-import { auditEnabled, passkeysEnabled } from "@/config/featureFlags";
+import { auditEnabled, devAuthEnabled, passkeysEnabled } from "@/config/featureFlags";
 import { themes, type Theme } from "@/theme/tokens";
 
 const markDark = require("../../assets/brand/mark-dark.png");
@@ -125,7 +125,7 @@ function Heading({ title, body }: { readonly title: string; readonly body: strin
 }
 
 function SignIn() {
-  const { signIn } = useAuth();
+  const { signIn, signInDev } = useAuth();
   const theme = useColorScheme() === "light" ? themes.light : themes.dark;
   return (
     <>
@@ -141,6 +141,15 @@ function SignIn() {
         )}
         <Text maxFontSizeMultiplier={2} style={[styles.caption, { color: theme.textSecondary }]}>New accounts get full access right away.</Text>
       </Card>
+      {/* Expo Go cannot run the native provider modules, so the buttons above
+          fail there. This card only appears when the build was configured for
+          local development against a PAPER backend started with dev auth. */}
+      {devAuthEnabled() ? (
+        <Card>
+          <Text maxFontSizeMultiplier={2} style={[styles.caption, { color: theme.critical }]}>Development sign-in — no provider verification. Local PAPER backend only.</Text>
+          <Button label="Sign in for development" onPress={() => void signInDev()} />
+        </Card>
+      ) : null}
     </>
   );
 }
