@@ -2,7 +2,29 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Rebuilt the interface against `docs/PRODUCT_SPEC.md` sections 11.2 and 12. Navigation is now the specified five bottom tabs — Home, Scanner, Strategies, Positions, More — as real `expo-router` routes with declarative `Stack.Protected` guards driven by the authentication state machine. This replaces the single 1,646-line route whose eight equal-width in-page pills wrapped "Strategies" and "Exchanges" onto three lines. Portfolio, Exchanges, Alerts, Health and Security moved behind More.
+
+- Replaced the colour-only `src/theme/tokens.ts` with a `src/theme` module: the section 12.2 palette verbatim plus the semantic roles that section requires, an 8-point spacing grid, a type scale with tabular-numeral presets, four corner radii, motion durations, and a `ThemeProvider` that removes the 28 duplicated colour-scheme ternaries. `accent` is now the specified blue and mint is reserved for `signal`, so protective, destructive and freshness states no longer share one green — previously "Halt new risk", "Read only" and "Resume" were three identical mint fills.
+
+- Added a shared component library — `Screen`, `Card`, `Text`, `Button`, `Field`, `Pill`, `Badge`, `Row`, `Icon`, `BottomSheet`, `EmptyState`, `ErrorState`, `SkeletonRow` — plus the section 12.2 domain components including `MetricCard`, `MoneyText`, `RateText`, `FreshnessBadge`, `HealthStatus`, `FundingCountdown`, `YieldBreakdown`, `RiskBanner`, `PermissionGate`, `HoldToConfirm` and a `DeltaGauge` hedge balance bar. Icons come from the already-vendored `expo-symbols`, which resolves to SF Symbols on iOS and Material Symbols elsewhere; no icon dependency was added.
+
+- Routed every request failure through one `ErrorState` backed by `describeFailure`, replacing roughly fourteen sites that rendered the raw transport message. Status codes no longer reach users: an undescribed 404 is reported as an app/server version mismatch, since the backend describes genuine missing records with `problem+json`. `SecurityCenter`'s `catch(() => undefined)` is gone, so a failing audit or access-request read no longer renders as an empty list.
+
+- Replaced eleven copies of the `queueMicrotask(refresh)` fetch pattern with a single `useResource` hook exposing loading, empty, error and stale state, and added `RefreshControl` pull-to-refresh to every surface. Scanner, Portfolio, Health and Home now carry a `FreshnessBadge`.
+
+- Reweighted the safety controls. Halting, going read-only and disabling a venue are ordinary buttons; flattening every position, resuming entries after a halt, closing a position, deleting a credential, disabling an account, disarming the pilot and deleting an account now require `HoldToConfirm` with their exact scope stated first.
+
 ### Added
+
+- A Home screen implementing section 11.4: equity, deployable and deployed capital, net PnL and realized funding, the next funding countdown on server time, quick actions, open positions with their hedge balance bars, best eligible routes, and venue health.
+
+- The persistent authenticated shell from section 11.2 — environment badge, active-breaker count, unread critical-alert count, and a sensitive-value mask toggle that re-masks automatically whenever the app leaves the foreground.
+
+- A startup API compatibility probe. The backend advertises its milestone at `/readyz`, and the routes this client calls exist only from M2 onward, so an M1-era deployment answers all of them with an empty-bodied 404. That case is now reported once as a banner naming the affected screens instead of as six identical failures.
+
+- Twenty-eight tests covering the failure-to-copy mapping, backend compatibility parsing, the decimal and countdown formatters, and the hedge gauge maths. The suite is 43 tests, up from 15.
 
 - Synchronized the mobile roadmap with backend M3 WebSocket/sequence-recovery implementation and the first M4 forced-RLS/private-runtime slice. Both remain locally unverified on the Rust/PostgreSQL side; no tenant selector, credential field or pilot control was added to mobile. Local mobile typecheck and all 14 tests pass.
 
