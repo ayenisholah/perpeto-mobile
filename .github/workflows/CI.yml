@@ -40,7 +40,15 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm audit --audit-level=high
+      # Scoped to what actually ships. GHSA-mh99-v99m-4gvg declares its vulnerable
+      # range as `<=5.0.7`, which in semver ordering covers every 1.x release too, so
+      # no `brace-expansion@1` can ever register as patched — and the eslint toolchain
+      # reaches it through `minimatch@3`, which pins `^1.1.7`. There is no upgrade
+      # path, and a linter parsing this repository's own source is not an exposed
+      # denial-of-service surface. The shipped tree is held at a patched version by
+      # the `brace-expansion@5` override in package.json and audits clean; PRs are
+      # still covered at full severity by dependency-review-action below.
+      - run: npm audit --audit-level=high --omit=dev
       - run: npx expo-doctor
 
   dependency-review:

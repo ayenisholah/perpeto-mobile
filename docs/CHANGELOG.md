@@ -43,6 +43,8 @@
 
 ### Security
 
+- Held `brace-expansion` at a patched release on the shipped dependency path and scoped the CI audit to it. `expo-updates` reaches the package through `glob@13` → `minimatch@10`, so GHSA-mh99-v99m-4gvg (unbounded expansion → out-of-memory DoS) landed in the production tree; a `brace-expansion@5` override pins it to `^5.0.9` and `npm audit --omit=dev` now reports zero findings. The remaining nine advisories are all the eslint toolchain, which reaches `brace-expansion` through `minimatch@3` (`^1.1.7`), and they cannot be resolved: the advisory expresses its vulnerable range as `<=5.0.7`, which in semver ordering covers every 1.x release, so even `1.1.18` is reported as vulnerable and no 1.x upgrade can clear it. Rather than force the linter's tree onto an incompatible 5.x, the `npm audit` gate now runs `--omit=dev` — a linter parsing this repository's own source is not an exposed denial-of-service surface — while `dependency-review-action` continues to gate pull requests at full severity. A `brace-expansion@1` override still moves the dev toolchain to the newest 1.x. Verified: lint, typecheck, and all 15 tests pass on the updated tree.
+
 - The scaffold contains no exchange credentials or trading mutations and labels backend entry readiness as blocked.
 - Pending users cannot enter the private shell; provider cancellation is non-destructive, and revoked/reused/deleted sessions clear stored credentials.
 

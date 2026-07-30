@@ -43,7 +43,9 @@
     "vitest": "4.1.10"
   },
   "overrides": {
-    "uuid": ">=11.1.1"
+    "uuid": ">=11.1.1",
+    "brace-expansion@1": "^1.1.18",
+    "brace-expansion@5": "^5.0.9"
   },
   "scripts": {
     "start": "expo start",
