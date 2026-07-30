@@ -105,6 +105,42 @@ export class AuthController {
     }
   }
 
+  /**
+   * Development sign-in for Expo Go, which cannot run the native Google or Apple
+   * modules. Deliberately never calls `authorizeProvider`, so `providers.ts` and
+   * its native imports stay untouched.
+   *
+   * Everything else is the ordinary flow: a real server challenge, a real PKCE
+   * verifier, the real exchange endpoint, and a real session. Only the identity
+   * token is synthetic, and it is accepted solely by a backend running with
+   * `PERPETO_DEV_AUTH=true` in PAPER mode. The subject is fixed so repeated
+   * sign-ins resolve to the same user and personal tenant.
+   *
+   * `GOOGLE` rather than `APPLE` because the exchange only checks the nonce
+   * binding for Apple, which a synthetic token cannot satisfy. `platform` is
+   * `IOS` because the backend still rejects any other value — an M1-era
+   * constraint, not something this path should paper over.
+   */
+  public async signInDev(): Promise<AuthResult> {
+    const pkce = await createPkce();
+    const challenge = await this.#client.createSocialChallenge("GOOGLE", "signex://auth/callback", pkce.challenge);
+    const installationId = await this.store.installationId();
+    const transition = await this.#client.exchangeSocialAuthorization({
+      challenge_id: challenge.id,
+      authorization_code: "perpeto-dev-authorization-code",
+      identity_token: "perpeto-dev:local-owner:owner@perpeto.invalid",
+      code_verifier: pkce.verifier,
+      device: {
+        installation_id: installationId,
+        platform: "IOS",
+        app_version: Constants.expoConfig?.version ?? "0.2.0",
+        display_name: Device.deviceName ?? "Expo Go",
+      },
+    });
+    if (transition.session !== undefined) await this.#acceptSession(transition.session);
+    return { transition, cancelled: false };
+  }
+
   public async bootstrap(token: string): Promise<AuthTransition> {
     return await this.#client.bootstrap(token);
   }

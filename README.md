@@ -43,7 +43,24 @@ EXPO_PUBLIC_API_URL=http://<host-lan-ip>:8080
 
 Then `npm start` and open the project from Expo Go on a device sharing that network. Confirm connectivity by loading `http://<host-lan-ip>:8080/readyz` in the phone's browser first; if that fails, the cause is the network or a host firewall rather than the app.
 
-Expo Go runs the JavaScript bundle only. Google/Apple sign-in and passkeys are native modules it does not include, so authenticated screens require an EAS development build (`eas build --profile development`). Keep `EXPO_PUBLIC_PASSKEYS_ENABLED` and `EXPO_PUBLIC_AUDIT_ENABLED` off under Expo Go. The local backend runs in PAPER mode, which serves no venue credentials and permits no external writes.
+Expo Go runs the JavaScript bundle only. Google/Apple sign-in and passkeys are native modules it does not include, so real provider sign-in requires an EAS development build (`eas build --profile development`). Keep `EXPO_PUBLIC_PASSKEYS_ENABLED` and `EXPO_PUBLIC_AUDIT_ENABLED` off under Expo Go. The local backend runs in PAPER mode, which serves no venue credentials and permits no external writes.
+
+### Development sign-in
+
+To reach the authenticated screens from Expo Go without a native build, set both halves of the development sign-in (DEC-0014):
+
+```
+# perpeto-mobile/.env.local
+EXPO_PUBLIC_DEV_AUTH_ENABLED=true
+```
+```
+# perpeto-backend/deploy/dev.env
+PERPETO_DEV_AUTH=true
+```
+
+The sign-in card then offers a development button that exchanges a synthetic identity token instead of a provider one. Restart the API and run `npx expo start --clear`, because Expo inlines `EXPO_PUBLIC_*` at bundle time.
+
+**This substitutes provider identity verification — it is an authentication bypass.** The backend permits it in PAPER mode only and refuses to start if `PERPETO_DEV_AUTH` is set in any other mode. Both flags belong only in the gitignored local files above; never set either for a build that talks to a deployed backend.
 
 ## Delivery
 
