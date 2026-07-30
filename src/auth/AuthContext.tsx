@@ -11,7 +11,7 @@ import * as Crypto from "expo-crypto";
 import type { MfaEnrollment, SocialProvider } from "@ayenisholah/perpeto-api-client";
 
 import { AuthController } from "./controller";
-import { secureSessionStore } from "./sessionStore";
+import { platformSessionStore } from "./sessionStore";
 import { initialAuthState, reduceAuthState, type AuthState } from "./state";
 
 interface AuthContextValue {
@@ -37,7 +37,7 @@ function messageOf(error: unknown): string {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const controller = useMemo(() => new AuthController(secureSessionStore), []);
+  const controller = useMemo(() => new AuthController(platformSessionStore), []);
   const [state, dispatch] = useReducer(reduceAuthState, initialAuthState);
 
   const restore = useCallback(async () => {

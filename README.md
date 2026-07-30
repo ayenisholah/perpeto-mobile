@@ -62,6 +62,23 @@ The sign-in card then offers a development button that exchanges a synthetic ide
 
 **This substitutes provider identity verification — it is an authentication bypass.** The backend permits it in PAPER mode only and refuses to start if `PERPETO_DEV_AUTH` is set in any other mode. Both flags belong only in the gitignored local files above; never set either for a build that talks to a deployed backend.
 
+### Running in a browser
+
+When no Expo Go build supports this SDK on your device's iOS version, run the app as a web page instead:
+
+```bash
+npx expo start --web
+```
+
+This needs the backend's development CORS layer, since it otherwise sends no CORS headers and the browser blocks every call:
+
+```
+# perpeto-backend/deploy/dev.env
+PERPETO_DEV_CORS_ORIGINS=http://localhost:8081,http://127.0.0.1:8081
+```
+
+Session storage falls back to `localStorage` on web, because `expo-secure-store` has no web implementation. That is **not** secure storage — any script on the origin can read it — so the web store refuses to run outside a development bundle. Web is for inspecting the app locally; iOS remains the delivery target, and `GlassSurface` degrades to a plain surface off iOS.
+
 ## Delivery
 
 Pull requests run checks only. The app is linked to EAS project `@ayenisholah/signex-mobile`; successful `main` builds trigger the enabled iOS-only TestFlight workflow while its protected provider and automation configuration remains valid. The latest verified run submitted `0.2.0 (14)` to App Store Connect. Android delivery and production OTA channels are outside this slice. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
