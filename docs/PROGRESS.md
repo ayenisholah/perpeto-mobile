@@ -5,6 +5,7 @@
 - **Roadmap:** re-baselined by DEC-0015 on 2026-11-22.
 - **Milestone:** M1 done. M2, live-data paper trading, is next on the backend. The mobile M3 work (hosted web demo, viewer UX) follows.
 - **CI:** Mobile CI and iOS TestFlight were green on `main` at `2a52154` (2026-07-30).
+- **Delivery:** EAS delivery is paused (`EAS_TESTFLIGHT_ENABLED=false`, 2026-11-22). Resuming it is part of M3.
 - **Drift check:** the scheduled Shared Document Drift check has failed daily since at least 2026-09-24, because backend shared documents were ahead of the mobile copies. The backend re-baseline sync should clear it.
 - **Last local verification:** 2026-11-22, on the design-system branch: lint, typecheck and 80 tests pass.
 
@@ -29,7 +30,7 @@ The following surfaces sit behind `EXPO_PUBLIC_PASSKEYS_ENABLED` and `EXPO_PUBLI
 ## Open items by milestone
 
 - **M2:** freshness and stale-feed presentation for live public data.
-- **M3:** hosted web build; demo-viewer entry, badge and read-only enforcement; TestFlight tester availability; the accessibility pass; the brand mark recoloured to the new palette.
+- **M3:** hosted web build; demo-viewer entry, badge and read-only enforcement; resuming EAS delivery and confirming TestFlight tester availability; the accessibility pass; the brand mark recoloured to the new palette.
 - **M4:** verify Exchanges against testnet and demo accounts and capture evidence screenshots.
 
 ## Next tasks

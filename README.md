@@ -6,7 +6,7 @@ Perpeto Mobile is the Expo operations client for [Perpeto](https://github.com/ay
 
 | Milestone | Status |
 |---|---|
-| M1 Foundations | **Done**: five-tab shell, auth, scanner, positions, strategies, controls, portfolio, health, alerts, Exchanges; AgentFloor dark design system; client `0.22.0`; CI and TestFlight green |
+| M1 Foundations | **Done**: five-tab shell, auth, scanner, positions, strategies, controls, portfolio, health, alerts, Exchanges; AgentFloor dark design system; client `0.22.0`; CI green; TestFlight paused |
 | M2 Live-data paper trading | **Next** (backend-led): freshness and stale-feed states in the client |
 | M3 Public demo | Planned: hosted web build, read-only demo viewer, TestFlight tester availability |
 | M4 Testnet execution | Planned: Exchanges verified against testnet and demo accounts |
@@ -88,6 +88,6 @@ Session storage falls back to `localStorage` on web, because `expo-secure-store`
 
 ## Delivery
 
-Pull requests run checks only. The app is linked to EAS project `@ayenisholah/signex-mobile`; successful `main` builds trigger the enabled iOS-only TestFlight workflow while its protected provider and automation configuration remains valid. The latest verified run submitted `0.2.0 (14)` to App Store Connect. Android delivery, production OTA channels and a public app-store release are out of scope. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
+Pull requests run checks only. The app is linked to EAS project `@ayenisholah/signex-mobile`. **EAS delivery is paused:** `EAS_TESTFLIGHT_ENABLED` is `false`, so merges to `main` do not build or submit to TestFlight. The latest delivered build is `0.2.0 (14)`, submitted to App Store Connect on 2026-07-20. Android delivery, production OTA channels and a public app-store release are out of scope. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
 
 No license has been granted yet. Until a license decision is recorded, all rights are reserved.

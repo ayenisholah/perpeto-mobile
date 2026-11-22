@@ -16,6 +16,8 @@
 
 ### Changed
 
+- Paused EAS delivery. The `EAS_TESTFLIGHT_ENABLED` repository variable is now `false`, so `IOS_TESTFLIGHT.yml` no longer builds or submits after merges to `main`, or on manual dispatch. `docs/DEPLOYMENT.md` and the README record the pause and how to resume.
+
 - Re-baselined the mobile docs to the backend's DEC-0015 roadmap. Perpeto is a public reference implementation: M1 foundations is done, then M2 live-data paper trading, M3 public demo and M4 testnet execution. LIVE is permanently off.
   - `README.md`, `docs/IMPLEMENTATION.md`, `docs/PROGRESS.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md` and `docs/DEPLOYMENT.md` now describe the mobile M3 work: a hosted web build, the read-only demo viewer and TestFlight tester availability.
   - The consumer passkey, credential and pilot roadmap is replaced by flag-gated hardening that is kept but not extended.
