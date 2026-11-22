@@ -1,6 +1,6 @@
 # iOS TestFlight Delivery
 
-This file documents the current iOS delivery path. The M4 passkey and live-trading requirements below are target work and are not present in today's store build.
+This file documents the current iOS delivery path and the M3 public web demo target. There is no public app-store release and no live trading (DEC-0015).
 
 Perpeto uses EAS project `@ayenisholah/signex-mobile`, Apple bundle identifier `com.signex.mobile`, and App Store Connect app `6790819875`. The `testflight` EAS profile builds only iOS and submits the archive to TestFlight. Android delivery is outside this slice.
 
@@ -135,10 +135,15 @@ The generated iOS Podfile marks `GoogleUtilities` and `RecaptchaInterop` as modu
 
 The Google and Apple verification adapters, token exchange, session handlers, and staging authentication endpoints are implemented, but end-to-end social authentication still requires valid provider configuration and recorded device evidence. A successful archive is delivery evidence only, not authentication or live-trading certification.
 
-## M4 public-app and passkey target
+## M3 public web demo target
 
-Production builds bind to the shared public Perpeto API and its WebAuthn relying-party identity. The associated domain/app-site-association configuration, Android Digital Asset Links, bundle/package identifiers and backend RP ID/origin allowlist must agree exactly. Staging and production use distinct relying parties so a staging passkey cannot authorize production.
+Not yet implemented. Planned shape:
 
-Passkey private material remains in the operating-system credential provider. Exchange credentials are entered only into an ephemeral enrollment form, excluded from analytics/crash capture/screenshots/clipboard, submitted over TLS to a one-use operation and cleared on background, timeout, cancellation or completion. No EAS secret, Expo environment value, Secure Store item or app cache contains a CEX key or secret.
+- **Build:** a production web export of the app, `npx expo export --platform web`, with `EXPO_PUBLIC_API_URL=https://api.perpeto.xyz`, served as static files over HTTPS.
+- **Viewer only:** the hosted build offers only the read-only demo viewer (DEC-0017). The web session store refuses to run outside a development bundle because `localStorage` is not secure storage, so no privileged session ever exists on the web.
+- **CORS:** the backend must allow the demo origin explicitly. The development CORS layer (`PERPETO_DEV_CORS_ORIGINS`) is for local use only.
+- **No secrets:** no EAS secret, Expo environment value or static asset contains a credential.
 
-App-store readiness for live controls requires the M4 backend contract, forced tenant isolation, Vault enrollment, account preflight and passkey verification to be deployed and tested. The app must hide or fail closed on live controls when the API/client contract is incompatible, Vault is sealed, the account is ineligible, or a fresh passkey proof is absent. Store approval or TestFlight delivery alone is never live-trading evidence.
+## Optional passkey configuration
+
+The passkey surfaces are implemented hardening and stay flag-gated (`EXPO_PUBLIC_PASSKEYS_ENABLED`). If they are enabled for a native development build, the associated-domain and app-site-association configuration, bundle identifier, and backend RP ID/origin allowlist must agree exactly, and staging must use its own relying party. Exchange credentials are entered only into an ephemeral, non-persisted form. TestFlight delivery is never live-trading evidence.
