@@ -22,12 +22,23 @@ Read [PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md), [DECISION.md](docs/DECISION.md), [
 Requirements: Node.js 24 and npm 11.
 
 ```bash
-npm ci
-npm run lint
+npm ci                 # also points git at .githooks (pre-push refuses main)
+npm run lint           # zero warnings allowed
 npm run typecheck
-npm test
+npm run test:coverage  # fails below the coverage floor
 npm start
 ```
+
+### Contributing
+
+`main` only changes through pull requests (DEC-0019). Branch protection enforces this for every account, administrators included, and the `pre-push` hook refuses a push to `main` locally. Work on a `feat/`, `fix/`, `docs/` or `chore/` branch.
+
+A PR merges when the required `documentation` and `mobile` checks pass. It must update `docs/CHANGELOG.md`.
+
+The gates are:
+- **ESLint** with zero warnings, including type-aware rules: no floating or misused promises, `consistent-type-imports`, no `any`, exhaustive hook dependencies, `eqeqeq`.
+- **TypeScript** in strict mode, plus `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noImplicitOverride` and `noFallthroughCasesInSwitch`.
+- **Vitest coverage thresholds** in `vitest.config.mts`. The floor only rises.
 
 Set `EXPO_PUBLIC_API_URL` to the paper backend URL. No mutation is permitted while data is stale, offline, or incompatible.
 
