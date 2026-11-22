@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Security
+
+- Cleared the high-severity audit findings that were failing the `mobile` check on every PR.
+  - **Expo patches:** aligned every Expo SDK 57 package to its current patch release with `npx expo install --fix`, plus React Native 0.86.3. `expo-doctor` now passes 21/21.
+  - **xmldom:** pinned `@xmldom/xmldom` to the patched 0.8.15 and 0.9.12 through `overrides`.
+  - **Audit gate:** the bare `npm audit` step is replaced by `npm run audit:deps` (`scripts/audit.ts`). It fails on any high or critical advisory unless it is reviewed in `scripts/audit-allowlist.json` with a reason and an expiry date, and an expired entry fails again.
+  - **Reviewed exceptions:** two, both expiring 2027-02-28. `decode-uri-component` is reached only through `expo-router` → `query-string@7`, and its only fix is ESM-only. `image-size` runs at Metro bundle time on repository-owned images, and its patched release breaks Metro's API.
+
 ### Changed
 
 - Rebuilt the interface against `docs/PRODUCT_SPEC.md` sections 11.2 and 12. Navigation is now the specified five bottom tabs — Home, Scanner, Strategies, Positions, More — as real `expo-router` routes with declarative `Stack.Protected` guards driven by the authentication state machine. This replaces the single 1,646-line route whose eight equal-width in-page pills wrapped "Strategies" and "Exchanges" onto three lines. Portfolio, Exchanges, Alerts, Health and Security moved behind More.

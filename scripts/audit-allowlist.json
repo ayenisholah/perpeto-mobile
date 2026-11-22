@@ -1,0 +1,20 @@
+[
+  {
+    "advisory": "https://github.com/advisories/GHSA-qr28-fpjm-wq7f",
+    "package": "decode-uri-component",
+    "reason": "Reached only through expo-router -> query-string@7, which needs the CommonJS 0.2.x line; the only patched release (0.5.1) is ESM-only and would break routing. It decodes the app's own deep links on the device, so the denial of service is self-inflicted. Fixed by the next expo-router major (SDK upgrade).",
+    "expires": "2027-02-28"
+  },
+  {
+    "advisory": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
+    "package": "image-size",
+    "reason": "Used only by Metro at bundle time on this repository's own image assets; no untrusted image reaches it. The patched 2.1.0 changes the default-export API that metro/src/Assets.js calls. Fixed when React Native's Metro moves to image-size 2.1+.",
+    "expires": "2027-02-28"
+  },
+  {
+    "advisory": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
+    "package": "image-size",
+    "reason": "Same exposure as GHSA-5p2g-fcmc-qvqq: bundle-time only, repository-owned images, no compatible patched release for Metro.",
+    "expires": "2027-02-28"
+  }
+]
