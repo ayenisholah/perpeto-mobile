@@ -1,8 +1,9 @@
 /**
- * Colour roles from PRODUCT_SPEC section 12.2. The first ten roles are the
- * normative table and are copied verbatim; the rest are the semantic roles the
- * same section requires us to define separately so that no single value ever
- * has to carry two meanings.
+ * Colour roles from PRODUCT_SPEC section 12.2, drawn from the same design
+ * system as AgentFloor (the Settle tokens): dark only, warm paper and ink, one
+ * lime accent. The ten normative roles come first; the rest are the semantic
+ * roles the same section requires us to define separately so that no single
+ * value ever has to carry two meanings.
  *
  * Two rules constrain every use site:
  *
@@ -15,68 +16,56 @@
  * Colour never carries meaning alone (section 12.2). Every state that uses one
  * of these also pairs a sign, label or glyph.
  */
-export const themes = {
-  light: {
-    background: "#F5F7FB",
-    surface: "#FFFFFF",
-    surfaceElevated: "#EEF2F7",
-    textPrimary: "#101828",
-    textSecondary: "#475467",
-    border: "#D0D5DD",
-    accent: "#1E5EFF",
-    signal: "#007A70",
-    velocity: "#6D28D9",
-    focus: "#174EA6",
+const dark = {
+  /** paper */
+  background: "#0F0F0F",
+  /** card */
+  surface: "#181817",
+  /** secondary */
+  surfaceElevated: "#252422",
+  /** ink */
+  textPrimary: "#F1EFE6",
+  /** muted-foreground */
+  textSecondary: "#A7A59C",
+  border: "rgba(245,235,235,0.10)",
+  /** The single lime accent. */
+  accent: "#CBFE42",
+  /** Soft lime: the "live" family, kept distinct from the accent fill. */
+  signal: "#E9FB7F",
+  /** bronze */
+  velocity: "#93C449",
+  focus: "#CBFE42",
 
-    positive: "#067647",
-    negative: "#B42318",
-    warning: "#B54708",
-    critical: "#912018",
-    informational: "#174EA6",
-    disabled: "#98A2B3",
-    long: "#0369A1",
-    short: "#6D28D9",
-    stale: "#64748B",
-    healthy: "#067647",
+  positive: "#1A9E70",
+  negative: "#D95926",
+  warning: "#C98500",
+  critical: "#E6443D",
+  informational: "#3987E5",
+  disabled: "rgba(241,239,230,0.30)",
+  long: "#1581FF",
+  /** gilt */
+  short: "#F0C13E",
+  stale: "rgba(241,239,230,0.45)",
+  healthy: "#1A9E70",
 
-    /** Foreground for text and glyphs sitting on an `accent` fill. */
-    onAccent: "#FFFFFF",
-    /** Foreground for text and glyphs sitting on a `critical` fill. */
-    onCritical: "#FFFFFF",
-    /** Tinted chip and badge background. */
-    field: "rgba(30,94,255,0.10)",
-    /** Scrim behind modals and sheets. */
-    overlay: "rgba(16,24,40,0.40)",
-  },
-  dark: {
-    background: "#080D18",
-    surface: "#111827",
-    surfaceElevated: "#1B2535",
-    textPrimary: "#F8FAFC",
-    textSecondary: "#B6C2D2",
-    border: "#344054",
-    accent: "#78A6FF",
-    signal: "#5EEAD4",
-    velocity: "#C4B5FD",
-    focus: "#A8C7FA",
-
-    positive: "#6FD39B",
-    negative: "#FF9BAB",
-    warning: "#F5B14C",
-    critical: "#FF6B85",
-    informational: "#A8C7FA",
-    disabled: "#5A6B85",
-    long: "#7DD3FC",
-    short: "#C4B5FD",
-    stale: "#94A3B8",
-    healthy: "#6FD39B",
-
-    onAccent: "#06122B",
-    onCritical: "#2A0710",
-    field: "rgba(120,166,255,0.14)",
-    overlay: "rgba(2,6,23,0.60)",
-  },
+  /** Foreground for text and glyphs sitting on an `accent` fill. */
+  onAccent: "#0F0F0F",
+  /** Foreground for text and glyphs sitting on a `critical` fill. */
+  onCritical: "#0F0F0F",
+  /** Tinted chip and badge background (lime at 10%). */
+  field: "rgba(203,254,66,0.10)",
+  /** Scrim behind modals and sheets. */
+  overlay: "rgba(0,0,0,0.60)",
 } as const;
+
+/**
+ * The interface ships dark only. The map is kept so call sites stay keyed by
+ * scheme should a second scheme ever be specified.
+ */
+export const themes = { dark } as const;
+
+/** Chart series, in order. Matches AgentFloor's `SERIES`. */
+export const series = ["#CBFE42", "#3987E5", "#D95926", "#1A9E70", "#C98500"] as const;
 
 export type Theme = (typeof themes)[keyof typeof themes];
 export type ColorRole = keyof Theme;
