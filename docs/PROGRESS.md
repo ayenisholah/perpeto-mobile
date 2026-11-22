@@ -30,7 +30,7 @@ The following surfaces sit behind `EXPO_PUBLIC_PASSKEYS_ENABLED` and `EXPO_PUBLI
 ## Open items by milestone
 
 - **M2:** freshness and stale-feed presentation for live public data.
-- **M3:** hosted web build; demo-viewer entry, badge and read-only enforcement; resuming EAS delivery and confirming TestFlight tester availability; the accessibility pass; the brand mark recoloured to the new palette.
+- **M3:** hosted web build; demo-viewer entry, badge and read-only enforcement; resuming EAS delivery and confirming TestFlight tester availability; the accessibility pass.
 - **M4:** verify Exchanges against testnet and demo accounts and capture evidence screenshots.
 
 ## Next tasks

@@ -29,6 +29,10 @@ npm run test:coverage  # fails below the coverage floor
 npm start
 ```
 
+### Brand assets
+
+The squared perpetual-loop mark and the outlined `PERPETO` wordmark are generated from code. Edit the geometry in `scripts/render-brand.mjs`, never the SVGs, then run `npm run brand:render` to rewrite `assets/brand/perpeto-*.svg` and every PNG that `app.json` references. `scripts/brand.test.ts` fails if an asset uses a colour outside the AgentFloor palette, contains live text, or is missing or the wrong size.
+
 ### Contributing
 
 `main` only changes through pull requests (DEC-0019). Branch protection enforces this for every account, administrators included, and the `pre-push` hook refuses a push to `main` locally. Work on a `feat/`, `fix/`, `docs/` or `chore/` branch.
