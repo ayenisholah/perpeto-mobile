@@ -1,5 +1,22 @@
 import { useAuth } from "@/auth/AuthContext";
 
+/** The read-only public demo principal (DEC-0017). */
+export function useIsDemo(): boolean {
+  const { state } = useAuth();
+  return state.kind === "AUTHENTICATED" && state.user.demo === true;
+}
+
+/**
+ * True when the interface must offer no mutation at all: the demo principal,
+ * or any account holding no role beyond Viewer. The server enforces the same
+ * rule; this only keeps controls that would be refused off the screen.
+ */
+export function useIsReadOnly(): boolean {
+  const demo = useIsDemo();
+  const privileged = useIsPrivileged();
+  return demo || !privileged;
+}
+
 function useRoles(): readonly string[] {
   const { state } = useAuth();
   return state.kind === "AUTHENTICATED" ? state.user.roles : [];

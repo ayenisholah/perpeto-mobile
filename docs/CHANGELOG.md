@@ -2,8 +2,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- M3: a read-only interface for the demo principal and Viewer-only accounts (DEC-0017), against backend client `0.24.0`.
+  - **Access hooks:** `useIsDemo()` and `useIsReadOnly()` (the demo, or no role beyond Viewer) join the existing hooks.
+  - **Hidden controls:** alert acknowledgement is hidden for read-only users. Security shows a demo explanation instead of providers, sessions and account deletion, and the shell shows a "Read-only demo" badge. Trading, strategy, control and exchange actions were already hidden for anyone who cannot trade.
+  - **Web:** the public demo and web sign-in move to the Next.js web platform (`perpeto-web`), so this client stays mobile-only.
+  - **Tests:** the access hooks, including the demo staying read-only with any role.
+
 ### Changed
 
+- Bumped `expo` to its newest SDK 57 patch (57.0.34), because `expo-doctor` fails the `mobile` check as soon as a newer patch ships.
+- Pinned the Perpeto API client package to version `0.24.0`.
 - Bumped five Expo SDK 57 packages to their newest patch releases (`expo-build-properties`, `expo-constants`, `expo-router`, `expo-splash-screen`, `expo-updates`), because `expo-doctor` fails the `mobile` check as soon as a newer patch ships.
 
 ### Security
