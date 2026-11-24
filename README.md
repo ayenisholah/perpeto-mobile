@@ -1,10 +1,17 @@
 # Perpeto Mobile
 
-Perpeto Mobile is the Expo iOS and Android operations client for the shared, multi-tenant Perpeto funding-rate arbitrage backend. It displays opportunities, execution state, risk, accounting, alerts, approvals, and system health. It never runs trading logic or stores exchange credentials.
+Perpeto Mobile is the Expo operations client for [Perpeto](https://github.com/ayenisholah/perpeto-backend), a public, self-hostable reference implementation of a market-neutral funding-rate arbitrage system. It shows opportunities, execution state, risk, PnL, alerts and system health. It never runs trading logic or stores exchange credentials, and real-money LIVE trading is permanently off (DEC-0015).
 
 ## Current status
 
-M2 paper features, their mobile monitoring surfaces and the lossless-decimal `0.15.0` client integration are implemented, but shared exit gates remain open for backend Rust/PostgreSQL and device evidence. M3 CEX integration is in progress. The app includes authentication, a session-derived personal-tenant summary, scanner, positions, strategies, emergency controls, portfolio/PnL, health, alerts, and a masked Exchanges tab with sandbox preview/submit and exact connector accounting/reconciliation reads. It never receives exchange credentials or enables production writes. See [PROGRESS.md](docs/PROGRESS.md).
+| Milestone | Status |
+|---|---|
+| M1 Foundations | **Done**: five-tab shell, auth, scanner, positions, strategies, controls, portfolio, health, alerts, Exchanges; AgentFloor dark design system; client `0.22.0`; CI and TestFlight green |
+| M2 Live-data paper trading | **Next** (backend-led): freshness and stale-feed states in the client |
+| M3 Public demo | Planned: hosted web build, read-only demo viewer, TestFlight tester availability |
+| M4 Testnet execution | Planned: Exchanges verified against testnet and demo accounts |
+
+The passkey, credential-enrollment, pilot and audit surfaces are implemented and kept dark behind feature flags. See [PROGRESS.md](docs/PROGRESS.md) and [MILESTONE.md](docs/MILESTONE.md).
 
 ## Authoritative documents
 
@@ -81,6 +88,6 @@ Session storage falls back to `localStorage` on web, because `expo-secure-store`
 
 ## Delivery
 
-Pull requests run checks only. The app is linked to EAS project `@ayenisholah/signex-mobile`; successful `main` builds trigger the enabled iOS-only TestFlight workflow while its protected provider and automation configuration remains valid. The latest verified run submitted `0.2.0 (14)` to App Store Connect. Android delivery and production OTA channels are outside this slice. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
+Pull requests run checks only. The app is linked to EAS project `@ayenisholah/signex-mobile`; successful `main` builds trigger the enabled iOS-only TestFlight workflow while its protected provider and automation configuration remains valid. The latest verified run submitted `0.2.0 (14)` to App Store Connect. Android delivery, production OTA channels and a public app-store release are out of scope. Follow [the credential and TestFlight runbook](docs/DEPLOYMENT.md).
 
 No license has been granted yet. Until a license decision is recorded, all rights are reserved.

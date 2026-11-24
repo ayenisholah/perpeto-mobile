@@ -2,25 +2,43 @@
 
 ## Current objective
 
-Keep the existing M2 monitoring and M3 connector-observability surfaces paper/shadow-safe, retain the consumed lossless-decimal contract, and complete the pending backend/device evidence. The personal-tenant session slice and backend's first forced-RLS/private-runtime slice are implemented locally; database/adversarial evidence remains open. Implement consumer credential enrollment and `PILOT` controls only after the separate passkey and Vault contracts land in small contract-pinned slices.
+Support M2, live-data paper trading, and then deliver the mobile half of M3, the public demo (DEC-0015). The app is an operations and monitoring client for a single-operator reference system. It never runs trading logic or holds exchange credentials, and LIVE is permanently fail-closed.
 
-## M4 ordered slices
+## M2 — Live-data paper trading
 
-1. **Personal tenant session — implemented locally:** consume session-derived tenant status and paper/pilot eligibility without accepting or storing a selectable tenant ID. Cross-account and physical-device evidence remains open.
-2. **Passkey lifecycle:** register/list/revoke platform passkeys with native iOS/Android credential APIs; handle RP/origin errors, cancellation, lost-device recovery and remote session revocation.
-3. **Secure enrollment UX:** collect CEX API key/secret/passphrase in ephemeral, non-persisted fields; suppress analytics, screenshots and crash breadcrumbs; bind submission to a one-use passkey-authorized operation and clear on every exit path.
-4. **Account preflight:** display permissions, account/margin mode, connection/private-stream health, reconciliation and shadow results. Explain why read/trade-only credentials with withdrawals/transfers/admin disabled are mandatory.
-5. **Pilot arming:** show platform connector certification separately from personal account eligibility; require fresh passkey and typed `ENABLE PILOT`; display exact tenant/account/routes/limits being armed. Do not present M4 as `CERTIFIED_LIVE`.
-6. **Live monitoring and containment:** show tenant/global breaker badges, stale/private-stream/Vault status, disarm, pause, close and flatten actions with server-confirmed outcomes and in-flight recovery.
-7. **Credential lifecycle:** passkey-authorized rotation/revocation, sequencing warnings for open positions, exchange-side revoke guidance and deletion/recovery states. Never offer secret reveal/export.
-8. **Store evidence:** real iOS/Android tests for passkeys, background/offline automation visibility, push deep links, accessibility, privacy shield, enrollment cleanup and fail-closed contract behavior.
+The backend adds live public data; the client mainly has to show it honestly.
+
+1. Show per-leg data freshness and source on the scanner, opportunity detail and Home, using the existing `FreshnessBadge`.
+2. Show stale-feed and venue-feed failures from `/health`. Make it clear that entries are blocked on stale legs rather than silently filled.
+3. Pin any additive API client version through `scripts/record-api-client-update.mjs`.
+
+## M3 — Public demo
+
+1. **Hosted web build:** a production web export (`expo export --platform web`) pointed at `https://api.perpeto.xyz`. The current web session store refuses to run outside a development bundle because `localStorage` is not secure storage. So the hosted build supports only the read-only demo viewer, which holds no privileged session.
+2. **Demo viewer UX (DEC-0017):** a "View demo" entry on sign-in. A persistent "Read-only demo" badge in the shell. Every mutating control hidden or disabled with an explanation. Covered by a test that viewer mode renders no enabled mutation.
+3. **TestFlight:** confirm the existing iOS workflow still delivers from `main`, and record tester availability.
+4. **Evidence:** a smoke run of the hosted web build against staging, and an accessibility pass on the five tabs at 200% text.
+
+## M4 — Testnet execution
+
+No new surfaces are required. The Exchanges screen already shows masked venue accounts, sandbox order previews and submission, connector orders and reconciliation. M4 verifies those screens against the operator's testnet and demo accounts, and captures screenshots for the evidence record.
+
+## Implemented hardening (kept, flag-gated)
+
+Passkeys, credential enrollment, preflight, pilot arming and the audit card stay behind `EXPO_PUBLIC_PASSKEYS_ENABLED` and `EXPO_PUBLIC_AUDIT_ENABLED`, both off by default. They are maintained, not extended. The native passkey ceremony needs an EAS development build and is optional.
 
 ## Boundary rules
 
-The phone authorizes but does not execute unattended strategies and does not hold the backend decryption root. Closing the app must not stop an armed server strategy. Local biometrics may unlock the app, but only a server-verified platform passkey assertion satisfies M4 credential/live step-up.
+- Generated API types are authoritative, and decimals stay strings, converted for display only.
+- Mutations are unavailable offline, on stale state, with an incompatible client, or without server authorization.
+- Biometrics may unlock the app but never replace server-side step-up.
 
-Generated API types remain authoritative; decimal math remains display-only. Live actions are unavailable offline, on stale state, with an incompatible client, or without server eligibility. The UI never interprets platform connector certification as proof that the trader's account is ready.
+## Deferred (DEC-0018)
 
-## Deferred
-
-Team/shared tenants, copy trading, automatic CEX transfers/withdrawals and arbitrary external-wallet signing remain unavailable. DEX signer approval UI moves to M5. `CERTIFIED_LIVE` and broader production rollout follow M6 hardening in M7.
+- DEX signer approval UI
+- Treasury and rebalancing screens
+- Telegram/Discord settings
+- Light theme
+- Android delivery
+- Public app-store release
+- Any real-money live control

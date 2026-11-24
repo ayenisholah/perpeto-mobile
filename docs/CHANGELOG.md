@@ -16,6 +16,12 @@
 
 ### Changed
 
+- Re-baselined the mobile docs to the backend's DEC-0015 roadmap. Perpeto is a public reference implementation: M1 foundations is done, then M2 live-data paper trading, M3 public demo and M4 testnet execution. LIVE is permanently off.
+  - `README.md`, `docs/IMPLEMENTATION.md`, `docs/PROGRESS.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md` and `docs/DEPLOYMENT.md` now describe the mobile M3 work: a hosted web build, the read-only demo viewer and TestFlight tester availability.
+  - The consumer passkey, credential and pilot roadmap is replaced by flag-gated hardening that is kept but not extended.
+  - Stale status claims are corrected: client `0.22.0` (not `0.15.0`), 80 tests (not 14), CI and TestFlight green at `2a52154`, and the Shared Document Drift check failing daily since 2026-09-24.
+  - Shared documents arrive through the backend sync.
+
 - Moved the design system onto the AgentFloor (Settle) tokens, following the revised `docs/PRODUCT_SPEC.md` section 12. The interface is now dark only. `app.json` pins `userInterfaceStyle` to `dark`, and the light palette, the scheme ternaries and `useScheme` are gone. The palette is warm paper `#0F0F0F` and ink `#F1EFE6`, with a single lime accent `#CBFE42` and lime-tinted fields. Each semantic role keeps its own value. Every corner is square except status dots (`radius.dot`). Interface text uses Space Grotesk and mono values use Space Mono, both bundled through `@expo-google-fonts/*` and loaded behind the splash screen. `display` takes the uppercase, tightly tracked AgentFloor headline treatment. Motion uses the shared 160/200/240 ms durations and AgentFloor's ease-out curve, plus `rise` and `livePulse` tokens. A new `src/theme/colors.test.ts` checks WCAG 2.2 AA contrast for every text, fill and status pairing and fails if two status roles share a colour. The brand mark assets are not yet recoloured.
 
 - Rebuilt the interface against `docs/PRODUCT_SPEC.md` sections 11.2 and 12. Navigation is now the specified five bottom tabs — Home, Scanner, Strategies, Positions, More — as real `expo-router` routes with declarative `Stack.Protected` guards driven by the authentication state machine. This replaces the single 1,646-line route whose eight equal-width in-page pills wrapped "Strategies" and "Exchanges" onto three lines. Portfolio, Exchanges, Alerts, Health and Security moved behind More.
