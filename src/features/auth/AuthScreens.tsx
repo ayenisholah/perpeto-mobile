@@ -25,7 +25,7 @@ export function StartingScreen() {
 }
 
 export function SignInScreen() {
-  const { signIn, signInDev } = useAuth();
+  const { signIn, signInDev, demoMode, retry } = useAuth();
 
   return (
     <Screen
@@ -47,6 +47,20 @@ export function SignInScreen() {
           New accounts get access straight away.
         </Text>
       </Card>
+
+      {/* The hosted web build is the read-only public demo (DEC-0017). It opens
+          the demo on load; this is the way back in after leaving it or after a
+          failed start. */}
+      {demoMode ? (
+        <Card>
+          <Text variant="heading">Live demo</Text>
+          <Text tone="textSecondary" variant="body">
+            Browse a seeded PAPER tenant trading live public market data. No account is needed,
+            and nothing can be changed.
+          </Text>
+          <Button label="Open the live demo" onPress={() => void retry()} />
+        </Card>
+      ) : null}
 
       {/* Expo Go cannot load the native provider modules, so the buttons above
           fail there. This only appears in a build configured for local

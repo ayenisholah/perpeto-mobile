@@ -19,7 +19,7 @@ import { HoldToConfirm } from "@/components/domain";
 import { auditEnabled, passkeysEnabled } from "@/config/featureFlags";
 import { formatClock } from "@/utils/decimal";
 
-import { useIsOwner, useIsPrivileged } from "../access";
+import { useIsDemo, useIsOwner, useIsPrivileged } from "../access";
 import { CredentialEnrollmentCard } from "./CredentialEnrollmentCard";
 import { PasskeysCard } from "./PasskeysCard";
 import { PilotCard } from "./PilotCard";
@@ -37,6 +37,7 @@ export function SecurityScreen() {
   const { state, controller, logout, deleteAccount } = useAuth();
   const owner = useIsOwner();
   const privileged = useIsPrivileged();
+  const demo = useIsDemo();
   const [linkTotp, setLinkTotp] = useState("");
   const [actionError, setActionError] = useState<unknown>(undefined);
 
@@ -88,6 +89,28 @@ export function SecurityScreen() {
         { text: "Delete", style: "destructive", onPress: () => void deleteAccount() },
       ],
     );
+
+  // The public demo principal (DEC-0017) has no providers, sessions or account
+  // of its own to manage, and the server refuses every change it attempts.
+  if (demo) {
+    return (
+      <Screen
+        subtitle="This is the read-only public demo of a PAPER deployment."
+        title="Security"
+      >
+        <Card>
+          <Text variant="heading">{user.tenant.display_name}</Text>
+          <Text tone="textSecondary" variant="body">
+            You are viewing a seeded demo tenant without an account. Everything here is read-only:
+            the server refuses every change, and no exchange credential exists on this deployment.
+          </Text>
+          <Text tone="textSecondary" variant="caption">
+            The session lives only in this tab&apos;s memory and is renewed before it expires.
+          </Text>
+        </Card>
+      </Screen>
+    );
+  }
 
   return (
     <Screen

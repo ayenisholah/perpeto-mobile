@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import { useResource } from "@/api/useResource";
 import { useAuth } from "@/auth/AuthContext";
+import { useIsReadOnly } from "../access";
 import {
   Badge,
   Button,
@@ -25,6 +26,7 @@ const severityTones: Readonly<Record<string, ColorRole>> = {
 
 export function AlertsScreen() {
   const { controller } = useAuth();
+  const readOnly = useIsReadOnly();
   const [actionError, setActionError] = useState<unknown>(undefined);
 
   const load = useCallback(() => controller.client.listAlerts(), [controller]);
@@ -80,12 +82,18 @@ export function AlertsScreen() {
               {alert.message}
             </Text>
             {alert.acknowledged_at === null ? (
+              readOnly ? (
+                <Text tone="textSecondary" variant="caption">
+                  Unacknowledged
+                </Text>
+              ) : (
               <Button
                 inline
                 label="Acknowledge"
                 onPress={() => void acknowledge(alert.id)}
                 variant="secondary"
               />
+              )
             ) : (
               <Text tone="textSecondary" variant="caption">
                 Acknowledged {formatClock(alert.acknowledged_at)}

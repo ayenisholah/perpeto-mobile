@@ -7,6 +7,7 @@ import { useResource } from "@/api/useResource";
 import { useAuth } from "@/auth/AuthContext";
 import { Badge, IconButton, Row, Text } from "@/components";
 import { useMasking } from "@/state/masking";
+import { useIsDemo } from "../access";
 import { space, useTheme } from "@/theme";
 
 const markDark = require("../../../assets/brand/mark-dark.png");
@@ -24,6 +25,7 @@ export function ShellHeader() {
   const theme = useTheme();
   const router = useRouter();
   const { masked, toggle } = useMasking();
+  const demo = useIsDemo();
 
   const loadControls = useCallback(() => controller.client.getControls(), [controller]);
   const controls = useResource(loadControls);
@@ -47,6 +49,7 @@ export function ShellHeader() {
         />
         <Text variant="bodyStrong">Perpeto</Text>
         <Badge label="Paper" tone="signal" />
+        {demo ? <Badge label="Read-only demo" tone="textSecondary" /> : null}
       </Row>
 
       <Row gap={space.xxs}>

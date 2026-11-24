@@ -18,8 +18,15 @@ export interface AuthResult {
   readonly cancelled: boolean;
 }
 
+export interface DemoStart {
+  readonly user: CurrentUser;
+  /** Epoch milliseconds at which the demo access token expires. */
+  readonly expiresAt: number;
+}
+
 export class AuthController {
   #accessToken: string | undefined;
+  #demo = false;
   readonly #client: PerpetoClient;
 
   public constructor(private readonly store: SessionStore) {
@@ -141,6 +148,23 @@ export class AuthController {
     return { transition, cancelled: false };
   }
 
+  /**
+   * Opens the read-only public demo (DEC-0017). The backend issues an
+   * access-only session for its seeded demo tenant; it is held in memory only,
+   * never written to the session store, and is requested again when it lapses.
+   */
+  public async startDemo(): Promise<DemoStart> {
+    const session = await this.#client.createDemoSession();
+    this.#demo = true;
+    this.#accessToken = session.access_token;
+    const user = await this.#client.me();
+    return { user, expiresAt: Date.parse(session.access_token_expires_at) };
+  }
+
+  public get isDemo(): boolean {
+    return this.#demo;
+  }
+
   public async bootstrap(token: string): Promise<AuthTransition> {
     return await this.#client.bootstrap(token);
   }
@@ -201,6 +225,12 @@ export class AuthController {
   }
 
   public async logout(): Promise<void> {
+    // The demo principal may not call any mutating endpoint, logout included,
+    // and has nothing stored to revoke; dropping the token is the whole exit.
+    if (this.#demo) {
+      await this.clear();
+      return;
+    }
     try {
       await this.#client.logout();
     } finally {
@@ -218,6 +248,10 @@ export class AuthController {
 
   public async clear(): Promise<void> {
     this.#accessToken = undefined;
+    if (this.#demo) {
+      this.#demo = false;
+      return;
+    }
     await this.store.clear();
   }
 }

@@ -21,6 +21,7 @@ const client = {
   acknowledgeRecoveryCodes: vi.fn(),
   logout: vi.fn(),
   deleteAccount: vi.fn(),
+  createDemoSession: vi.fn(),
 };
 let clientOptions: { baseUrl: string; getAccessToken: () => string | undefined } | undefined;
 
@@ -229,5 +230,38 @@ describe("AuthController", () => {
     client[method].mockRejectedValue(new Error("offline"));
     await expect(new AuthController(store)[method]()).rejects.toThrow("offline");
     expect(store.saved).toBeNull();
+  });
+
+  describe("read-only demo", () => {
+    const demoSession = {
+      access_token: "demo-access",
+      access_token_expires_at: "2026-11-24T10:15:00Z",
+      session_id: "demo-session",
+    };
+
+    it("holds the demo token in memory and never touches the session store", async () => {
+      const store = memoryStore();
+      client.createDemoSession.mockResolvedValue(demoSession);
+      client.me.mockResolvedValue({ ...user, demo: true });
+      const controller = new AuthController(store);
+      const started = await controller.startDemo();
+      expect(started.user).toMatchObject({ demo: true });
+      expect(started.expiresAt).toBe(Date.parse("2026-11-24T10:15:00Z"));
+      expect(clientOptions?.getAccessToken()).toBe("demo-access");
+      expect(controller.isDemo).toBe(true);
+      expect(store.write).not.toHaveBeenCalled();
+    });
+
+    it("leaves the demo without calling the server or the session store", async () => {
+      const store = memoryStore();
+      client.createDemoSession.mockResolvedValue(demoSession);
+      const controller = new AuthController(store);
+      await controller.startDemo();
+      await controller.logout();
+      expect(client.logout).not.toHaveBeenCalled();
+      expect(store.clear).not.toHaveBeenCalled();
+      expect(clientOptions?.getAccessToken()).toBeUndefined();
+      expect(controller.isDemo).toBe(false);
+    });
   });
 });

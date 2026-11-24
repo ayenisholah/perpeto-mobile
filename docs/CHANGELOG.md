@@ -2,8 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- M3: the read-only public demo (DEC-0017), against backend client `0.24.0`.
+  - **Demo session:** with `EXPO_PUBLIC_WEB_DEMO=true`, a web build skips the stored-session restore and opens the backend's seeded demo tenant through `POST /api/v1/demo/session`. `AuthController.startDemo()` keeps the access-only token in memory and never writes it to the session store, so the production web storage guard still refuses to hold a refresh credential. `AuthContext` asks for a new session a minute before the old one lapses (`src/auth/demo.ts`). Leaving the demo just drops the token: the server would refuse `logout`. Native builds ignore the flag.
+  - **Read-only interface:** `useIsDemo()` and `useIsReadOnly()` (the demo, or no role beyond Viewer) join the access hooks. Alert acknowledgement is hidden for read-only users, Security shows a demo explanation instead of providers, sessions and account deletion, and the shell shows a "Read-only demo" badge. Trading, strategy, control and exchange actions were already hidden for anyone who cannot trade.
+  - **Sign-in on web:** shows "Open the live demo" when the flag is on.
+  - **Tests:** the access hooks (including the demo staying read-only with any role), the demo flag, the renewal delay, and the controller's in-memory demo session and server-free exit.
+
 ### Changed
 
+- Pinned the Perpeto API client package to version `0.24.0`.
 - Bumped five Expo SDK 57 packages to their newest patch releases (`expo-build-properties`, `expo-constants`, `expo-router`, `expo-splash-screen`, `expo-updates`), because `expo-doctor` fails the `mobile` check as soon as a newer patch ships.
 
 ### Security

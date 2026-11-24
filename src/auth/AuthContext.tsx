@@ -5,12 +5,17 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   type PropsWithChildren,
 } from "react";
+import { Platform } from "react-native";
 import * as Crypto from "expo-crypto";
 import type { MfaEnrollment, SocialProvider } from "@ayenisholah/perpeto-api-client";
 
+import { webDemoEnabled } from "@/config/featureFlags";
+
 import { AuthController } from "./controller";
+import { demoRenewDelay } from "./demo";
 import { platformSessionStore } from "./sessionStore";
 import { initialAuthState, reduceAuthState, type AuthState } from "./state";
 
@@ -27,6 +32,8 @@ interface AuthContextValue {
   readonly logout: () => Promise<void>;
   readonly deleteAccount: () => Promise<void>;
   readonly retry: () => Promise<void>;
+  /** Whether this build opens the read-only public demo (web only). */
+  readonly demoMode: boolean;
   readonly controller: AuthController;
 }
 
@@ -51,7 +58,38 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [controller]);
 
-  useEffect(() => { void restore(); }, [restore]);
+  // The hosted web build is the read-only demo (DEC-0017): it never restores a
+  // stored session, because a browser cannot protect a refresh credential.
+  const demoMode = Platform.OS === "web" && webDemoEnabled();
+  // Demo sessions carry no refresh token: a timer asks for a new one shortly
+  // before the current one lapses, for as long as the tab stays open. The
+  // timer reaches the latest `startDemo` through a ref so the callback need not
+  // name itself.
+  const renewal = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const renewDemo = useRef<() => Promise<void>>(async () => {});
+
+  const startDemo = useCallback(async () => {
+    if (renewal.current !== undefined) clearTimeout(renewal.current);
+    try {
+      const { user, expiresAt } = await controller.startDemo();
+      dispatch({ type: "RESTORED", user });
+      renewal.current = setTimeout(() => { void renewDemo.current(); }, demoRenewDelay(expiresAt, Date.now()));
+    } catch (error) {
+      if (error instanceof TypeError) dispatch({ type: "RESTORE_OFFLINE" });
+      else dispatch({ type: "FAIL", message: messageOf(error) });
+    }
+  }, [controller]);
+
+  useEffect(() => {
+    renewDemo.current = startDemo;
+  }, [startDemo]);
+
+  useEffect(() => {
+    void (demoMode ? startDemo() : restore());
+    return () => {
+      if (renewal.current !== undefined) clearTimeout(renewal.current);
+    };
+  }, [demoMode, restore, startDemo]);
 
   const signIn = useCallback(async (provider: SocialProvider) => {
     dispatch({ type: "AUTHORIZE", provider });
@@ -136,9 +174,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     acknowledgeRecoveryCodes,
     logout,
     deleteAccount,
-    retry: restore,
+    retry: demoMode ? startDemo : restore,
+    demoMode,
     controller,
-  }), [acknowledgeRecoveryCodes, beginMfaEnrollment, bootstrap, confirmMfaEnrollment, controller, deleteAccount, logout, restore, signIn, signInDev, state, verifyMfa]);
+  }), [acknowledgeRecoveryCodes, beginMfaEnrollment, bootstrap, confirmMfaEnrollment, controller, deleteAccount, demoMode, logout, restore, signIn, signInDev, startDemo, state, verifyMfa]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

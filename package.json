@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "0.2.0",
   "dependencies": {
-    "@ayenisholah/perpeto-api-client": "file:vendor/ayenisholah-perpeto-api-client-0.22.0.tgz",
+    "@ayenisholah/perpeto-api-client": "file:vendor/ayenisholah-perpeto-api-client-0.24.0.tgz",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo-google-fonts/space-mono": "^0.4.2",
     "@expo/ui": "~57.0.26",
