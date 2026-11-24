@@ -4,6 +4,12 @@
 
 ### Added
 
+- M3: the hosted web demo pipeline (DEC-0021).
+  - **Build:** `npm run build:web` exports the static web build. Mobile CI runs it with the demo flags on every PR.
+  - **Image:** `Dockerfile.web` and `deploy/web/Caddyfile` serve `dist/` on `:8080` with SPA fallback and immutable caching for hashed assets. The image strips Caddy's file capability so it runs read-only with every capability dropped; without that, the kernel refused to exec it.
+  - **Workflow:** `.github/workflows/WEB_DEMO.yml` publishes `ghcr.io/ayenisholah/perpeto-mobile:web-<sha>` and `:web-main` after Mobile CI succeeds on `main`. When `WEB_DEPLOY_ENABLED` is on, it rolls the image onto the staging host through the backend's `Perpeto-UpdateWeb` SSM document and checks the public URL.
+  - The web is now a delivery channel for the read-only demo only. `docs/DEPLOYMENT.md` documents it, and the session-store comment says so.
+
 - M3: the read-only public demo (DEC-0017), against backend client `0.24.0`.
   - **Demo session:** with `EXPO_PUBLIC_WEB_DEMO=true`, a web build skips the stored-session restore and opens the backend's seeded demo tenant through `POST /api/v1/demo/session`. `AuthController.startDemo()` keeps the access-only token in memory and never writes it to the session store, so the production web storage guard still refuses to hold a refresh credential. `AuthContext` asks for a new session a minute before the old one lapses (`src/auth/demo.ts`). Leaving the demo just drops the token: the server would refuse `logout`. Native builds ignore the flag.
   - **Read-only interface:** `useIsDemo()` and `useIsReadOnly()` (the demo, or no role beyond Viewer) join the access hooks. Alert acknowledgement is hidden for read-only users, Security shows a demo explanation instead of providers, sessions and account deletion, and the shell shows a "Read-only demo" badge. Trading, strategy, control and exchange actions were already hidden for anyone who cannot trade.

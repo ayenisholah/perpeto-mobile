@@ -46,6 +46,11 @@ jobs:
       # dependency-review-action below.
       - run: npm run audit:deps
       - run: npx expo-doctor
+      # The hosted web demo (DEC-0021) must keep exporting.
+      - run: npm run build:web
+        env:
+          EXPO_PUBLIC_API_URL: https://app.perpeto.xyz
+          EXPO_PUBLIC_WEB_DEMO: "true"
 
   dependency-review:
     if: github.event_name == 'pull_request'

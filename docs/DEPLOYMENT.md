@@ -2,7 +2,7 @@
 
 > **Delivery is paused.** Since 2026-11-22 the repository variable `EAS_TESTFLIGHT_ENABLED` is `false`, so `IOS_TESTFLIGHT.yml` skips both its automatic post-CI trigger and manual dispatch. No EAS build or App Store Connect submission runs. To resume, re-run the preflight below and set the variable back to `true` with a PR that records the change in `CHANGELOG.md`.
 
-This file documents the current iOS delivery path and the M3 public web demo target. There is no public app-store release and no live trading (DEC-0015).
+This file documents the paused iOS delivery path and the M3 hosted web demo. There is no public app-store release and no live trading (DEC-0015).
 
 Perpeto uses EAS project `@ayenisholah/signex-mobile`, Apple bundle identifier `com.signex.mobile`, and App Store Connect app `6790819875`. The `testflight` EAS profile builds only iOS and submits the archive to TestFlight. Android delivery is outside this slice.
 
@@ -137,14 +137,22 @@ The generated iOS Podfile marks `GoogleUtilities` and `RecaptchaInterop` as modu
 
 The Google and Apple verification adapters, token exchange, session handlers, and staging authentication endpoints are implemented, but end-to-end social authentication still requires valid provider configuration and recorded device evidence. A successful archive is delivery evidence only, not authentication or live-trading certification.
 
-## M3 public web demo target
+## M3 hosted web demo (DEC-0021)
 
-Not yet implemented. Planned shape:
+`https://app.perpeto.xyz` serves the read-only public demo (DEC-0017). It is the only web delivery; social sign-in stays native.
 
-- **Build:** a production web export of the app, `npx expo export --platform web`, with `EXPO_PUBLIC_API_URL=https://api.perpeto.xyz`, served as static files over HTTPS.
-- **Viewer only:** the hosted build offers only the read-only demo viewer (DEC-0017). The web session store refuses to run outside a development bundle because `localStorage` is not secure storage, so no privileged session ever exists on the web.
-- **CORS:** the backend must allow the demo origin explicitly. The development CORS layer (`PERPETO_DEV_CORS_ORIGINS`) is for local use only.
-- **No secrets:** no EAS secret, Expo environment value or static asset contains a credential.
+- **Build:** `npm run build:web` (`expo export --platform web`) with `EXPO_PUBLIC_API_URL=https://app.perpeto.xyz` and `EXPO_PUBLIC_WEB_DEMO=true`. Mobile CI runs it on every PR so the export cannot silently break.
+- **Image:** `Dockerfile.web` copies `dist/` into `caddy:2.10.2-alpine` with `deploy/web/Caddyfile`. It serves on `:8080`, routes unknown paths to the app, and caches hashed assets for a year. The image strips Caddy's file capability so it runs with every capability dropped, read-only.
+- **Pipeline:** `.github/workflows/WEB_DEMO.yml` runs after Mobile CI succeeds on `main`. It publishes `ghcr.io/ayenisholah/perpeto-mobile:web-<sha>` and `:web-main`. Then, when `WEB_DEPLOY_ENABLED` is `true`, it sends the backend's `Perpeto-UpdateWeb` SSM document to the staging host and checks `https://app.perpeto.xyz/` and `/readyz`.
+- **Same origin:** the backend's front-door Caddy proxies `/api/*`, `/readyz` and `/livez` on `app.perpeto.xyz` to the API, so the browser needs no CORS and the backend keeps none in production.
+- **Session:** a demo session is access-only and held in memory. The web never stores or receives a refresh token, and the production web session store still refuses to run.
+- **No secrets:** the static assets contain no credential.
+
+### Operator setup
+
+1. In the `web-demo` environment of this repository, store the `perpeto-web-deployer` key by running `scripts/aws/create-deploy-key.sh perpeto-web-deployer ayenisholah/perpeto-mobile web-demo` from `perpeto-backend`. This also sets `AWS_REGION`.
+2. Set the repository variable `WEB_DEPLOY_ENABLED=true`.
+3. Point the `app.perpeto.xyz` A record at the staging Elastic IP. Until then, the demo answers at `https://app.<elastic-ip>.sslip.io`.
 
 ## Optional passkey configuration
 

@@ -73,8 +73,8 @@ export const secureSessionStore: SessionStore = {
  *
  * That trade is acceptable for a local development page and nowhere else, so
  * this store refuses to operate in a production bundle rather than silently
- * downgrading the guarantee. The web target is not a delivery channel for this
- * app; iOS TestFlight is.
+ * downgrading the guarantee. The hosted web demo (DEC-0021) never uses it: its
+ * demo session is access-only and lives in memory.
  */
 const webDevSessionStore: SessionStore = {
   async read() {
