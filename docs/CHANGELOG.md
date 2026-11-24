@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped five Expo SDK 57 packages to their newest patch releases (`expo-build-properties`, `expo-constants`, `expo-router`, `expo-splash-screen`, `expo-updates`), because `expo-doctor` fails the `mobile` check as soon as a newer patch ships.
+
 ### Security
 
 - Cleared the high-severity audit findings that were failing the `mobile` check on every PR.
