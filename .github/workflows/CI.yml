@@ -39,7 +39,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run test:coverage
       # Fails on any high or critical advisory in the shipped tree unless it is
       # reviewed, with a reason and an expiry date, in scripts/audit-allowlist.json.
       # Dev-only tooling is still covered at full severity on PRs by

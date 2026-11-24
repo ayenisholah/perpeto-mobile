@@ -1,5 +1,14 @@
 # Mobile Testing Strategy
 
+## Gates
+
+- `npm run test:coverage` runs Vitest with V8 coverage over the `src/**/*.ts` logic modules. It fails below the thresholds in `vitest.config.mts`: lines 82%, statements 80%, branches 79%, functions 74%. CI runs it on every PR. Raise the thresholds when coverage grows; never lower them.
+- React Native components (`.tsx`) cannot execute under Node, so they are not counted. Native modules (Expo Secure Store, Crypto, Constants, Apple and Google sign-in, React Native's `Platform`) are replaced with `vi.mock` so the auth controller, session stores and provider adapters run their real logic.
+- Three React hooks remain uncovered because they need a renderer: `src/api/useResource.ts`, `src/features/access.ts` and `src/theme/motion.ts`.
+- `npm run lint` fails on any warning, and `npm run typecheck` runs strict TypeScript.
+
+## Scope
+
 - Unit tests cover formatting, server-time countdowns, permissions, schemas, freshness, masking, cursor deduplication, and reducers.
 - Component tests cover loading, empty, error, stale, partial, offline, and unauthorized states at 200% text. The interface is dark only, and `src/theme/colors.test.ts` holds every colour pairing to WCAG 2.2 AA.
 - Integration tests cover REST snapshot/WebSocket replay, cursor gaps, expired previews, idempotent pending operations, revocation, and recovery.

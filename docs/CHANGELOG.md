@@ -16,6 +16,12 @@
 
 ### Changed
 
+- Hardened the build gates.
+  - **Lint:** `npm run lint` now fails on any warning. ESLint adds type-aware rules: no floating or misused promises, consistent type imports, no `any`, unused variables, exhaustive hook dependencies, `eqeqeq` and `no-console`.
+  - **TypeScript:** adds `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noImplicitOverride` and `noFallthroughCasesInSwitch`.
+  - **Coverage:** `npm run test:coverage` (Vitest V8) enforces thresholds, and CI runs it. New tests cover the auth controller, both session stores, the Apple and Google provider adapters, feature flags, the health probe, every auth state transition, the passkey seam and the design-token rules. That takes logic coverage from 28% to 83% of lines and the suite from 80 to 176 tests.
+  - **PR-only:** a `pre-push` hook refuses pushes to `main`. `npm ci` installs it through the `prepare` script.
+
 - Paused EAS delivery. The `EAS_TESTFLIGHT_ENABLED` repository variable is now `false`, so `IOS_TESTFLIGHT.yml` no longer builds or submits after merges to `main`, or on manual dispatch. `docs/DEPLOYMENT.md` and the README record the pause and how to resume.
 
 - Re-baselined the mobile docs to the backend's DEC-0015 roadmap. Perpeto is a public reference implementation: M1 foundations is done, then M2 live-data paper trading, M3 public demo and M4 testnet execution. LIVE is permanently off.

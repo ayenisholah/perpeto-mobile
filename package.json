@@ -39,6 +39,7 @@
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/react": "~19.2.2",
+    "@vitest/coverage-v8": "4.1.10",
     "eslint": "^9.18.0",
     "eslint-config-expo": "~57.0.2",
     "typescript": "~6.0.3",
@@ -56,12 +57,14 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint",
+    "lint": "expo lint --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "brand:render": "node scripts/render-brand.mjs",
     "expo:check": "expo-doctor",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "audit:deps": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit.ts"
   },
   "private": true
