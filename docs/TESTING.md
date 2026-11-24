@@ -6,6 +6,10 @@
 - Real-device E2E covers MFA, biometrics, onboarding, scanner-to-entry, strategy controls, unwind, approvals, push deep links, background recovery, and update enforcement.
 - Accessibility evidence includes automated checks, VoiceOver, and TalkBack for critical flows.
 
+## Dependency audit
+
+`npm run audit:deps` (`scripts/audit.ts`, tested in `scripts/audit.test.ts`) runs `npm audit --omit=dev` and fails on any high or critical advisory in the shipped tree that is not reviewed in `scripts/audit-allowlist.json`. Each entry names one advisory and its package, explains why it is not exploitable here and why it cannot be fixed yet, and expires; an expired entry fails the gate again. CI runs it on every PR, and `dependency-review-action` still covers dev dependencies at full severity.
+
 M1A unit tests cover every server-driven auth transition, pending-user isolation, protected-route admission, revocation cleanup policy, and offline restoration lockout. Native provider cancellation, Secure Store failure/rotation, VoiceOver at 200% text, remote revocation, Apple/Google signup and linking, first-Owner bootstrap, TOTP/recovery, and deletion still require the recorded real-iPhone TestFlight matrix; unit tests are not device evidence or evidence for any trading workflow.
 
 ## M4 mobile security and live-control matrix
