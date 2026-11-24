@@ -16,6 +16,12 @@
 
 ### Changed
 
+- Redesigned the logo for the AgentFloor design system. The mark is now a squared perpetual loop: two interlocking square rings, one per hedge leg, woven over-under and leaned 12°, with square stroke ends.
+  - **Colours:** drawn in one colour from the palette. Lime on paper for dark surfaces, paper on a lime tile for the app icon, and ink for the Android monochrome icon.
+  - **Wordmark:** `PERPETO` in Space Grotesk Bold, outlined to paths with `opentype.js` from the bundled TTF.
+  - **Generation:** `scripts/render-brand.mjs` now generates every SVG source from code before rasterizing. The new `scripts/brand.test.ts` enforces palette-only colours, no live text, square canvases and square stroke ends, and checks the presence and size of every PNG.
+  - Replaces the mint/sky round-ribbon mark.
+
 - Hardened the build gates.
   - **Lint:** `npm run lint` now fails on any warning. ESLint adds type-aware rules: no floating or misused promises, consistent type imports, no `any`, unused variables, exhaustive hook dependencies, `eqeqeq` and `no-console`.
   - **TypeScript:** adds `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noImplicitOverride` and `noFallthroughCasesInSwitch`.
