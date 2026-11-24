@@ -12,6 +12,7 @@
 
 ### Changed
 
+- Bumped `expo` to its newest SDK 57 patch (57.0.34), because `expo-doctor` fails the `mobile` check as soon as a newer patch ships.
 - Pinned the Perpeto API client package to version `0.24.0`.
 - Bumped five Expo SDK 57 packages to their newest patch releases (`expo-build-properties`, `expo-constants`, `expo-router`, `expo-splash-screen`, `expo-updates`), because `expo-doctor` fails the `mobile` check as soon as a newer patch ships.
 

@@ -8,7 +8,7 @@
     "@expo-google-fonts/space-mono": "^0.4.2",
     "@expo/ui": "~57.0.26",
     "@react-native-google-signin/google-signin": "^16.1.2",
-    "expo": "~57.0.33",
+    "expo": "~57.0.34",
     "expo-apple-authentication": "~57.0.2",
     "expo-build-properties": "~57.0.24",
     "expo-constants": "~57.0.25",
