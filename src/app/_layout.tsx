@@ -1,12 +1,38 @@
+import { SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from "@expo-google-fonts/space-grotesk";
+import { SpaceMono_400Regular, SpaceMono_700Bold } from "@expo-google-fonts/space-mono";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { MaskingProvider } from "@/state/masking";
-import { ThemeProvider, useScheme, useTheme } from "@/theme";
+import { ThemeProvider, useTheme } from "@/theme";
+
+// Hold the native splash until the design-system faces are registered, so no
+// screen ever paints in a fallback font and then reflows.
+void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // Keys must match `fontFamilies` in src/theme/typography.ts.
+  const [fontsLoaded, fontError] = useFonts({
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_700Bold,
+    SpaceMono_400Regular,
+    SpaceMono_700Bold,
+  });
+  const fontsSettled = fontsLoaded || fontError !== null;
+
+  useEffect(() => {
+    if (fontsSettled) void SplashScreen.hideAsync();
+  }, [fontsSettled]);
+
+  // A font failure falls back to the system face rather than blocking the app.
+  if (!fontsSettled) return null;
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
@@ -30,7 +56,6 @@ export default function RootLayout() {
  */
 function RootNavigator() {
   const { state } = useAuth();
-  const scheme = useScheme();
   const theme = useTheme();
   const authenticated = state.kind === "AUTHENTICATED";
 
@@ -47,7 +72,7 @@ function RootNavigator() {
 
   return (
     <>
-      <StatusBar style={scheme === "light" ? "dark" : "light"} />
+      <StatusBar style="light" />
       <Stack screenOptions={{ contentStyle: { backgroundColor: theme.background }, headerShown: false }}>
         <Stack.Protected guard={authenticated}>
           <Stack.Screen name="(tabs)" />

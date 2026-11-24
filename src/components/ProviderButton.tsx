@@ -1,8 +1,10 @@
 import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
-import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { SocialProvider } from "@ayenisholah/perpeto-api-client";
+
+import { radius } from "@/theme";
 
 const googleLogo = require("../../assets/brand/google-g.svg");
 
@@ -19,14 +21,13 @@ interface ProviderVisual {
   readonly border?: string;
 }
 
-// Apple and Google both mandate specific button colors. Apple's HIG flips the
-// button polarity with the interface style; Google's brand guidelines have no
-// sanctioned dark fill, so its button stays light with a neutral border.
-function visualFor(provider: SocialProvider, dark: boolean): ProviderVisual {
+// Apple and Google both mandate specific button colors, so these sit outside
+// the theme. The interface is dark only, so Apple's HIG calls for the white
+// button; Google's brand guidelines have no sanctioned dark fill, so its button
+// stays light with a neutral border.
+function visualFor(provider: SocialProvider): ProviderVisual {
   if (provider === "APPLE") {
-    return dark
-      ? { label: "Continue with Apple", background: "#FFFFFF", foreground: "#000000" }
-      : { label: "Continue with Apple", background: "#000000", foreground: "#FFFFFF" };
+    return { label: "Continue with Apple", background: "#FFFFFF", foreground: "#000000" };
   }
   return {
     label: "Continue with Google",
@@ -37,8 +38,7 @@ function visualFor(provider: SocialProvider, dark: boolean): ProviderVisual {
 }
 
 export function ProviderButton({ provider, onPress, disabled = false }: ProviderButtonProps) {
-  const dark = useColorScheme() !== "light";
-  const visual = visualFor(provider, dark);
+  const visual = visualFor(provider);
   return (
     <Pressable
       accessibilityRole="button"
@@ -73,7 +73,7 @@ export function ProviderButton({ provider, onPress, disabled = false }: Provider
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: radius.sm,
     height: 52,
     justifyContent: "center",
     width: "100%",

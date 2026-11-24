@@ -1,42 +1,72 @@
-import { Platform, type TextStyle } from "react-native";
+import type { TextStyle } from "react-native";
 
 /**
- * Native system faces only, per PRODUCT_SPEC section 12.1. The mono face is
- * reserved for values that are read character by character — payload hashes,
- * identifiers, TOTP secrets and recovery codes — where proportional digits
- * cause transcription errors.
+ * Space Grotesk for interface text and Space Mono for character-by-character
+ * values, per PRODUCT_SPEC section 12.1 and matching AgentFloor. Both ship as
+ * bundled TTFs (`@expo-google-fonts/*`) and are loaded in the root layout, so
+ * nothing is fetched at runtime.
+ *
+ * Custom faces do not respond to `fontWeight`: each weight is its own family,
+ * so every variant names the family for its weight explicitly.
+ *
+ * The mono face is reserved for values that are read character by character —
+ * payload hashes, identifiers, TOTP secrets and recovery codes — where
+ * proportional digits cause transcription errors, plus the overline label.
  */
 export const fontFamilies = {
-  mono: Platform.select({ ios: "Menlo", default: "monospace" }),
+  sans: "SpaceGrotesk_400Regular",
+  sansMedium: "SpaceGrotesk_500Medium",
+  sansBold: "SpaceGrotesk_700Bold",
+  mono: "SpaceMono_400Regular",
+  monoBold: "SpaceMono_700Bold",
 } as const;
 
 /** Applied to every variant that renders a figure, so columns align. */
 const tabular: TextStyle = { fontVariant: ["tabular-nums"] };
 
+/** AgentFloor body tracking (-0.011em), in points for a given size. */
+const track = (fontSize: number, em: number) => Math.round(fontSize * em * 100) / 100;
+
 /**
  * The type scale. `metric` variants are the only ones that grow large; section
  * 12.1 gives risk and freshness the same weight as yield, so a headline figure
  * never gets a size the warning beside it cannot match.
+ *
+ * `display` carries AgentFloor's `.tc-display` treatment: bold, uppercase and
+ * tightly tracked. Its line height is 1.0x rather than the web's 0.9x so the
+ * glyphs never clip at 200% font scale.
  */
 export const typography = {
-  display: { fontSize: 32, fontWeight: "800", letterSpacing: -0.8, lineHeight: 38 },
-  title: { fontSize: 24, fontWeight: "700", letterSpacing: -0.4, lineHeight: 30 },
-  heading: { fontSize: 20, fontWeight: "700", letterSpacing: -0.2, lineHeight: 26 },
-  body: { fontSize: 17, fontWeight: "400", lineHeight: 25 },
-  bodyStrong: { fontSize: 17, fontWeight: "600", lineHeight: 25 },
-  label: { fontSize: 15, fontWeight: "600", lineHeight: 20 },
-  caption: { fontSize: 13, fontWeight: "400", lineHeight: 18 },
-  overline: { fontSize: 12, fontWeight: "800", letterSpacing: 0.6, lineHeight: 16 },
+  display: {
+    fontFamily: fontFamilies.sansBold,
+    fontSize: 32,
+    letterSpacing: track(32, -0.03),
+    lineHeight: 34,
+    textTransform: "uppercase",
+  },
+  title: { fontFamily: fontFamilies.sansBold, fontSize: 24, letterSpacing: track(24, -0.02), lineHeight: 30 },
+  heading: { fontFamily: fontFamilies.sansBold, fontSize: 20, letterSpacing: track(20, -0.011), lineHeight: 26 },
+  body: { fontFamily: fontFamilies.sans, fontSize: 17, letterSpacing: track(17, -0.011), lineHeight: 25 },
+  bodyStrong: { fontFamily: fontFamilies.sansMedium, fontSize: 17, letterSpacing: track(17, -0.011), lineHeight: 25 },
+  label: { fontFamily: fontFamilies.sansMedium, fontSize: 15, letterSpacing: track(15, -0.011), lineHeight: 20 },
+  caption: { fontFamily: fontFamilies.sans, fontSize: 13, lineHeight: 18 },
+  overline: {
+    fontFamily: fontFamilies.monoBold,
+    fontSize: 12,
+    letterSpacing: track(12, 0.08),
+    lineHeight: 16,
+    textTransform: "uppercase",
+  },
 
-  metric: { ...tabular, fontSize: 28, fontWeight: "700", letterSpacing: -0.6, lineHeight: 34 },
-  metricSmall: { ...tabular, fontSize: 17, fontWeight: "600", lineHeight: 22 },
-  numeric: { ...tabular, fontSize: 15, fontWeight: "500", lineHeight: 20 },
-  numericCaption: { ...tabular, fontSize: 13, fontWeight: "500", lineHeight: 18 },
+  metric: { ...tabular, fontFamily: fontFamilies.sansBold, fontSize: 28, letterSpacing: track(28, -0.02), lineHeight: 34 },
+  metricSmall: { ...tabular, fontFamily: fontFamilies.sansMedium, fontSize: 17, lineHeight: 22 },
+  numeric: { ...tabular, fontFamily: fontFamilies.sansMedium, fontSize: 15, lineHeight: 20 },
+  numericCaption: { ...tabular, fontFamily: fontFamilies.sansMedium, fontSize: 13, lineHeight: 18 },
 
   mono: { fontFamily: fontFamilies.mono, fontSize: 15, lineHeight: 22 },
   monoLarge: { fontFamily: fontFamilies.mono, fontSize: 18, lineHeight: 28 },
   /** Six-digit authenticator entry. */
-  code: { ...tabular, fontSize: 26, letterSpacing: 6, lineHeight: 32, textAlign: "center" },
+  code: { fontFamily: fontFamilies.monoBold, fontSize: 26, letterSpacing: 6, lineHeight: 32, textAlign: "center" },
 } satisfies Record<string, TextStyle>;
 
 export type TypeVariant = keyof typeof typography;

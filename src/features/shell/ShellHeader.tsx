@@ -7,10 +7,9 @@ import { useResource } from "@/api/useResource";
 import { useAuth } from "@/auth/AuthContext";
 import { Badge, IconButton, Row, Text } from "@/components";
 import { useMasking } from "@/state/masking";
-import { space, useScheme, useTheme } from "@/theme";
+import { space, useTheme } from "@/theme";
 
 const markDark = require("../../../assets/brand/mark-dark.png");
-const markLight = require("../../../assets/brand/mark-light.png");
 
 /**
  * The chrome section 11.2 requires on every authenticated screen: the
@@ -22,7 +21,6 @@ const markLight = require("../../../assets/brand/mark-light.png");
  */
 export function ShellHeader() {
   const { controller } = useAuth();
-  const scheme = useScheme();
   const theme = useTheme();
   const router = useRouter();
   const { masked, toggle } = useMasking();
@@ -44,7 +42,7 @@ export function ShellHeader() {
         <Image
           accessibilityIgnoresInvertColors
           contentFit="contain"
-          source={scheme === "light" ? markLight : markDark}
+          source={markDark}
           style={styles.mark}
         />
         <Text variant="bodyStrong">Perpeto</Text>

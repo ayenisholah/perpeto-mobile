@@ -42,7 +42,7 @@ export function Pill({ label, active, onPress }: PillProps) {
 const styles = StyleSheet.create({
   pill: {
     alignItems: "center",
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
     minHeight: 40,
