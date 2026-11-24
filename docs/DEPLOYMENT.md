@@ -1,5 +1,7 @@
 # iOS TestFlight Delivery
 
+> **Delivery is paused.** Since 2026-11-22 the repository variable `EAS_TESTFLIGHT_ENABLED` is `false`, so `IOS_TESTFLIGHT.yml` skips both its automatic post-CI trigger and manual dispatch. No EAS build or App Store Connect submission runs. To resume, re-run the preflight below and set the variable back to `true` with a PR that records the change in `CHANGELOG.md`.
+
 This file documents the current iOS delivery path and the M3 public web demo target. There is no public app-store release and no live trading (DEC-0015).
 
 Perpeto uses EAS project `@ayenisholah/signex-mobile`, Apple bundle identifier `com.signex.mobile`, and App Store Connect app `6790819875`. The `testflight` EAS profile builds only iOS and submits the archive to TestFlight. Android delivery is outside this slice.
@@ -120,7 +122,7 @@ npx expo config --type public
 Remove-Item Env:EAS_BUILD_PROFILE, Env:EXPO_PUBLIC_API_URL, Env:EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID, Env:EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID, Env:GOOGLE_IOS_URL_SCHEME
 ```
 
-After the preflight succeeds, enable the iOS-only workflow:
+After the preflight succeeds, enable the iOS-only workflow (currently paused; see the note at the top):
 
 ```powershell
 gh variable set EAS_TESTFLIGHT_ENABLED --repo ayenisholah/perpeto-mobile --body "true"
