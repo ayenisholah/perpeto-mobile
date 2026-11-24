@@ -92,6 +92,8 @@ export function SecurityScreen() {
 
   // The public demo principal (DEC-0017) has no providers, sessions or account
   // of its own to manage, and the server refuses every change it attempts.
+  // The web platform (perpeto-web) is where visitors reach it; the check stays
+  // here so the app never offers those controls to a demo session.
   if (demo) {
     return (
       <Screen
@@ -103,9 +105,6 @@ export function SecurityScreen() {
           <Text tone="textSecondary" variant="body">
             You are viewing a seeded demo tenant without an account. Everything here is read-only:
             the server refuses every change, and no exchange credential exists on this deployment.
-          </Text>
-          <Text tone="textSecondary" variant="caption">
-            The session lives only in this tab&apos;s memory and is renewed before it expires.
           </Text>
         </Card>
       </Screen>

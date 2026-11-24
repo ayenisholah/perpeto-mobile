@@ -39,17 +39,3 @@ export function devAuthEnabled(
 ): boolean {
   return value?.trim().toLowerCase() === "true";
 }
-
-/**
- * The hosted read-only web demo (DEC-0017, DEC-0021).
- *
- * When on, a web build opens straight into the backend's seeded demo tenant
- * with a short-lived, access-only session held in memory. Nothing is stored in
- * the browser, so the production web session-storage guard stays in place.
- * Native builds ignore it.
- */
-export function webDemoEnabled(
-  value = process.env.EXPO_PUBLIC_WEB_DEMO,
-): boolean {
-  return value?.trim().toLowerCase() === "true";
-}

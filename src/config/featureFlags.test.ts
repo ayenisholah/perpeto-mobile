@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { auditEnabled, devAuthEnabled, passkeysEnabled, webDemoEnabled } from "./featureFlags";
+import { auditEnabled, devAuthEnabled, passkeysEnabled } from "./featureFlags";
 
 describe.each([
   ["passkeysEnabled", passkeysEnabled],
   ["auditEnabled", auditEnabled],
   ["devAuthEnabled", devAuthEnabled],
-  ["webDemoEnabled", webDemoEnabled],
 ] as const)("%s", (_name, flag) => {
   it("ships dark when the variable is unset", () => {
     expect(flag(undefined)).toBe(false);
