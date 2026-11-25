@@ -10,7 +10,7 @@ Resolve project truth in this order:
 
 1. `docs/PRODUCT_SPEC.md`
 2. accepted entries in `docs/DECISION.md`
-3. `docs/ARCHITECTURE.md` and `docs/KEY_MANAGEMENT.md` for their declared target milestone and security boundaries
+3. `docs/ARCHITECTURE.md` and `docs/KEY_MANAGEMENT.md` for the implemented architecture and security boundaries
 4. published OpenAPI and event schemas for implemented wire behavior
 5. `docs/IMPLEMENTATION.md` and `docs/MILESTONE.md`
 6. `docs/TRACEABILITY.md`, `docs/PROGRESS.md`, and `README.md`
@@ -18,6 +18,8 @@ Resolve project truth in this order:
 Stop and request a decision when higher-priority sources conflict. Never silently choose an interpretation.
 
 ## Required workflow
+
+Every change reaches `main` through a pull request from a `feat/`, `fix/`, `docs/` or `chore/` branch (DEC-0019). Branch protection blocks direct pushes for every account, and `.githooks/pre-push` refuses them locally. A PR merges only when its required checks pass, and it must update `docs/CHANGELOG.md`. Build warnings are errors: each repository's lint and compile steps fail on any warning.
 
 Before editing, identify the specification section, decision IDs, acceptance criteria, and affected risk boundary. Keep the change within one milestone-sized objective. After editing, run proportionate checks, update `docs/CHANGELOG.md`, and update `docs/TRACEABILITY.md`, `docs/PROGRESS.md`, `docs/MILESTONE.md`, or `docs/DECISION.md` when their facts changed.
 

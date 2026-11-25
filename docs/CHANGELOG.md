@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Synced the backend-owned shared documents (`PRODUCT_SPEC`, `OVERVIEW`, `ENGINEERING`, `DECISION`, `MILESTONE`, `ARCHITECTURE`, `KEY_MANAGEMENT`) from backend `main` at `6ec1cf0`, shared version 9. They bring in DEC-0016 to DEC-0021 and M2 and M3 closed. The sync was done by hand because the automation's cross-repository token has expired.
+- `PROGRESS` records M2 and M3 done, this repository as the iOS client, and the web platform in `perpeto-web`.
+
 ### Added
 
 - M3: a read-only interface for the demo principal and Viewer-only accounts (DEC-0017), against backend client `0.24.0`.

@@ -1,10 +1,23 @@
 # Exchange Credential and Key Management
 
-<!-- SHARED-CONTENT-VERSION: 1 -->
+<!-- SHARED-CONTENT-VERSION: 2 -->
 
 ## Status and security objective
 
-This is the accepted M4 target design. The current environment-master-key and server-side CLI flow is transitional and is not approved for shared multi-user live trading.
+Under DEC-0015 the only exchange credentials Perpeto ever holds belong to the operator's own testnet and demo accounts (M4). PAPER, including the public demo, loads no venue credential at all (DEC-0016).
+
+The design below is **implemented in application code and kept as hardening**:
+
+| Component | Where it lives | Status |
+|---|---|---|
+| `VaultTransitSecretStore` behind the `SecretStore` trait | `crates/venue-service/src/vault.rs` | Implemented |
+| Ciphertext rewrap | `SecretStore::rewrap` and `bins/rewrap` | Implemented |
+| Passkey-gated enroll, rotate, revoke and delete | `crates/venue-service/src/enrollment.rs` | Implemented |
+| Preflight endpoint and worker | `crates/venue-service/src/preflight.rs`, `bins/preflight` | Implemented |
+
+For this scope, the transitional AES store is acceptable: one encrypted master key on the operator's VPS, with testnet secrets only. Deploying Vault infrastructure is an optional extra, not a milestone gate. That covers integrated storage and TLS, per-tenant Transit keys, a 2-of-3 Shamir initialization, workload policies and custodian runbooks.
+
+If Vault is ever used for real-money credentials, which is a non-goal, every control in this document becomes mandatory. The objective it was written for:
 
 Perpeto must execute authorized strategies while a trader's phone is offline without exposing raw exchange credentials to the database, logs, mobile storage, backups, support tooling or other tenants. A device passkey authorizes sensitive lifecycle actions; HashiCorp Vault Transit is the persistent cryptographic control plane.
 
@@ -57,7 +70,7 @@ After a VPS or Vault restart, two custodians provide their shares over an authen
 
 Backups contain Vault's encrypted storage and PostgreSQL ciphertext, never unseal shares. Recovery tests must prove that authorized custodians can restore both stores, preserve tenant/key mappings and re-establish leases without exposing plaintext. Loss of enough unseal shares makes credentials unrecoverable; loss or theft of sufficient shares is a security incident.
 
-## Required evidence before M4 live use
+## Evidence that real-money use would require (non-goal)
 
 - Cross-tenant authorization, forced-RLS and ciphertext-substitution tests.
 - Passkey challenge, replay, origin/RP ID, lost-device and recovery tests.

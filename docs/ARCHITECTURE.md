@@ -1,12 +1,32 @@
-# Perpeto Shared-VPS Architecture
+# Perpeto Architecture
 
-<!-- SHARED-CONTENT-VERSION: 2 -->
+<!-- SHARED-CONTENT-VERSION: 3 -->
 
 ## Status and scope
 
-This document defines the accepted target architecture for the controlled M4 `PILOT`. It is not a claim that the current runtime is safe for multi-user live trading. The current paper and M3 connector runtime must remain fail-closed for production exchange writes until the M4 isolation, credential, authorization, and recovery gates pass. M6 hardening must pass before M7 can broaden rollout or grant `CERTIFIED_LIVE`.
+This document describes the architecture Perpeto implements as a single-operator reference system (DEC-0015). The engine has four modes. PAPER uses live public data (DEC-0016). SANDBOX writes only to the operator's own testnet and demo accounts. SHADOW is read-only. LIVE is permanently fail-closed.
 
-One operator-managed VPS hosts a shared Perpeto control plane. Many independent traders use the public mobile app, but each trader owns exactly one personal tenant and connects only their own exchange accounts. Team tenants, shared portfolios and customer-fund custody are out of scope.
+The isolation layer described below is implemented and retained as hardening, not as a release gate: personal tenants, forced RLS, passkey step-up, the Vault Transit store and the pilot gate. Where this document describes behaviour that only matters for real-money or multi-user live trading, it is design record.
+
+## Live-data paper flow (M2)
+
+```text
+Binance / Bybit / OKX public REST + WebSocket   (no credentials)
+          |
+  connectors: instruments, funding, mark/index, order books
+          |
+  engine: MarketLeg per instrument --> scanner.scan_legs --> ranked opportunities
+          |                                   |
+  paper execution: fills simulated     freshness per leg; stale legs block entry
+  against live book depth                     |
+          |                                   v
+  PostgreSQL (positions, fills, funding, PnL, alerts) --> API --> mobile / web client
+```
+
+- The engine already builds each `MarketLeg` from `connector.market_stream` and `connector.current_funding` (`bins/engine/src/main.rs`). M2 makes that path available in PAPER through the keyless public endpoints only.
+- Fixture replay (`PERPETO_PAPER_SOURCE=fixtures`, with `PERPETO_SIM_START` and `PERPETO_SIM_TICK_SECS`) remains an explicit selection for deterministic tests.
+- **One snapshot per tick.** Every tick, the engine takes one `MarketSnapshot` and uses it for venue breakers, position supervision, ranking and strategy auto-entry. It persists the snapshot with the scan (`scan_runs.market_snapshot`). `POST /positions` opens against that stored snapshot, and only while it is fresh. Each leg fills at the VWAP of walking its captured book; thin books (`INSUFFICIENT_DEPTH`) and degraded legs (`VENUE_DEGRADED`) are refused.
+- PAPER never constructs a `SecretStore` read path, opens a private stream or calls a submit method.
 
 ## Logical architecture
 
@@ -49,19 +69,17 @@ Google and Apple establish user identity; Perpeto sessions remain authoritative.
 
 A passkey is not used to derive the long-lived exchange-secret encryption key. Requiring the phone for every decrypt would prevent unattended trading, and retaining a device-derived key on the server would defeat that security claim. Instead, a successful passkey ceremony records a time-bounded, purpose-bound authorization; server workloads subsequently use their Vault identities and tenant policy while the authorization and live eligibility remain valid.
 
-## Live execution boundary
+## Execution boundary
 
-Connector certification and account eligibility are distinct gates:
+External writes are permitted only in SANDBOX, and only to a connector account explicitly configured for a testnet or demo environment (DEC-0011). The implemented gate chain stays in place so that no shortcut path can submit externally:
+- passkey-authorized credential enrollment;
+- account preflight to `ELIGIBLE`;
+- pilot arming;
+- `permit_live_risk`.
 
-1. M3 certifies connector code and a venue/route at platform level through fixtures, contract tests, sandbox writes, reconciliation and read-only shadow evidence.
-2. A trader enrolls a least-privilege credential using a passkey-authorized, one-use submission flow.
-3. Perpeto validates credential permissions, account and margin mode, instrument coverage, balances, clocks, private streams, reconciliation and shadow behavior.
-4. The trader reviews limits and explicitly arms live trading with a new passkey assertion and typed confirmation.
-5. The engine may open M4 pilot risk only for that tenant, account and platform-certified route. Global and tenant breakers are both enforced.
+Global and tenant breakers are both enforced. Disarming, credential revocation, breaker activation or failed eligibility blocks new risk immediately, and disarm escalates to flatten.
 
-M4 may grant only the controlled `PILOT` state. `CERTIFIED_LIVE` remains unavailable until M6 hardening is accepted and M7 rollout begins.
-
-Disarming, credential revocation, tenant breaker activation or failed eligibility blocks new risk immediately. Flattening is explicit and policy-checked; revoking a credential before flattening may prevent Perpeto from closing venue positions, so the UI and runbook must explain and sequence that risk.
+Production routes stay unreachable because LIVE is locked. Route certification states (`PILOT`, `CERTIFIED_LIVE`) exist in code but are not pursued (DEC-0015, DEC-0018).
 
 ## Failure and blast-radius behavior
 
@@ -72,7 +90,7 @@ Disarming, credential revocation, tenant breaker activation or failed eligibilit
 - Platform integrity, market-data or connector-wide breach: activate the global breaker for affected routes or all new risk.
 - Suspected credential disclosure: disarm, revoke at the exchange, invalidate the Perpeto credential version, reconcile externally, and preserve non-secret audit evidence.
 
-The initial topology places the API, workloads, database and single Vault node on one VPS. It therefore has a shared host failure and compromise domain. M6 must add the approved hardening path, including tested recovery, stronger service isolation, Vault HA or managed auto-unseal, and static exchange egress where the venue supports IP allowlisting. Documentation and UI must not describe the initial topology as eliminating operator or host compromise risk.
+The topology places the API, workloads, database and, when deployed, a single Vault node on one VPS. It is one shared host failure and compromise domain. That is acceptable for paper and testnet scope. Vault HA, auto-unseal and stronger infrastructure isolation are deferred (DEC-0018). Documentation and UI must not describe the topology as eliminating operator or host compromise risk.
 
 ## Data ownership summary
 

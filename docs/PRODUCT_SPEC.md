@@ -7,93 +7,87 @@
 | Product name | **Perpeto** (working public name; complete trademark, domain, app-store and social-handle clearance before commercial release) |
 | Mobile display name | **Perpeto** |
 | Internal technical slug | `funding-arb` (stable and independent of the eventual public name) |
-| Document version | 1.1 |
-| Status | Implementation specification |
-| Last updated | 2026-07-20 |
-| Delivery model | Shared operator-managed VPS with one personal tenant per trader |
+| Document version | 2.0 |
+| Status | Reference implementation specification (re-baselined by DEC-0015) |
+| Last updated | 2026-11-22 |
+| Delivery model | Self-hosted by one operator on one VPS; public paper-trading demo |
 | Backend | Rust |
 | Mobile client | React Native with Expo, iOS and Android |
-| Initial venues | Binance, Bybit, OKX, dYdX, Hyperliquid |
+| Venues | Binance, Bybit, OKX (dYdX and Hyperliquid deferred, DEC-0018) |
 | Deployment | Docker Compose on a low-latency VPS |
 
 **Brand direction:** **Perpeto** is named for the *perpetual* futures it trades and the continuous funding **carry** it captures. It positions the product as a disciplined, market-neutral system that discovers funding-rate opportunities and holds controlled two-leg (spot–perpetual and perpetual–perpetual) positions. The brand line is *The perpetual edge.* Continuity and balance are the visual and operational themes, not promises of atomic cross-venue fills, guaranteed latency, neutrality or profit. The internal `funding-arb` slug remains independent of the public brand.
 
-> **Risk notice:** This system automates leveraged cryptocurrency trading. It cannot guarantee profit, funding receipt, fill quality, venue solvency, protocol safety, or uninterrupted connectivity. A delta-neutral position can still lose money through fees, basis changes, liquidations, borrow costs, stablecoin depegs, smart-contract failures, exchange outages, or faulty data. Live trading must remain disabled until every configured venue passes paper-trading and limited-capital certification. The operator is responsible for exchange eligibility, tax, licensing, sanctions, and other legal obligations in every applicable jurisdiction.
+> **Risk notice:** This system automates leveraged cryptocurrency trading. It cannot guarantee profit, funding receipt, fill quality, venue solvency, protocol safety, or uninterrupted connectivity. A delta-neutral position can still lose money through fees, basis changes, liquidations, borrow costs, stablecoin depegs, smart-contract failures, exchange outages, or faulty data. Real-money LIVE trading is a non-goal and stays permanently fail-closed (DEC-0015). Nothing in this project is investment advice. Anyone who self-hosts it is responsible for exchange eligibility, tax, licensing, sanctions and other legal obligations in their jurisdiction.
+
+> **How to read this specification:** Version 2.0 repositions Perpeto as a public reference implementation (DEC-0015). Sections 1, 2 and 19–21 state the current goal and scope. The engineering sections (3–18) remain the design record. Any requirement in them that applies only to real-money LIVE trading, to third-party traders or to a deferred capability (DEC-0018) is retained for completeness but is **not binding** on the roadmap in `MILESTONE.md`.
 
 ---
 
 ## 1. Executive summary
 
-The product is a multi-user, production-targeted system that discovers, opens, manages, and closes market-neutral funding-rate arbitrage positions. One operator-managed VPS serves independent consumer traders; each trader has one personal tenant and connects only their own exchange accounts. It supports:
+Perpeto is a public, self-hostable reference implementation of a market-neutral funding-rate arbitrage system. One operator runs it on one VPS. Its purpose is to demonstrate, in code that can be read, run and tested, how such a system finds opportunities, coordinates two non-atomic legs, bounds exposure, recovers from failures and reconciles to venue records. It supports two route types:
 
-1. **Spot versus perpetual:** normally long spot and short a positive-funding perpetual; reverse cash-and-carry is allowed only when a connector confirms short-borrow inventory and cost.
+1. **Spot versus perpetual:** normally long spot and short a positive-funding perpetual. Reverse cash-and-carry is allowed only when a connector confirms short-borrow inventory and cost.
 2. **Perpetual versus perpetual:** long the leg with the cheaper funding obligation and short the leg with the richer funding receipt, either across venues or between compatible products on one venue.
 
-The execution engine runs on a VPS close to the chosen exchange endpoints. The mobile application is an operations, monitoring, configuration, credential-enrollment, and approval client; it never runs trading logic and does not retain exchange credentials after enrollment. Server-side automation continues while the phone is offline.
-
-The first release integrates Binance, Bybit, OKX, dYdX, and Hyperliquid through a normalized adapter layer. CEX spot and linear stablecoin-settled perpetuals are in scope. dYdX and Hyperliquid provide perpetual legs in v1. Inverse contracts, dated futures, options, and DEX spot are extension points, not v1 trading instruments.
+The engine paper-trades on real public market data from Binance, Bybit and OKX (DEC-0016). It can also execute against the operator's own testnet and demo accounts in `SANDBOX` mode. The Expo client is an operations and monitoring surface. It never runs trading logic or holds exchange credentials. CEX spot and linear stablecoin-settled perpetuals are in scope. Inverse contracts, dated futures, options, DEX venues and DEX spot are not.
 
 ### 1.1 Product goals
 
 - Continuously rank executable opportunities by conservative **net** return, not headline funding rate.
 - Coordinate both legs with bounded residual delta and deterministic recovery from partial fills or timeouts.
-- Account for actual account-tier fees, expected slippage, spread, borrow, gas, and exit costs.
-- Keep a durable, auditable record of every decision, order intent, fill, funding payment, risk event, and operator action.
-- Protect capital with layered pre-trade, in-trade, venue, portfolio, and operational controls.
-- Provide clear mobile visibility into opportunity quality, current risk, realized PnL, system health, and actions requiring approval.
-- Safely serve many independent traders from one shared control plane using personal tenants, database row-level security, tenant-scoped secrets and per-tenant risk controls.
+- Account for fees, expected slippage, spread, borrow and exit costs.
+- Keep a durable, auditable record of every decision, order intent, fill, funding payment, risk event and operator action.
+- Protect capital, simulated or testnet, with layered pre-trade, in-trade, venue, portfolio and operational controls.
+- Give clear mobile and web visibility into opportunity quality, current risk, PnL, system health and data freshness.
+- Make the system easy to evaluate: a public paper demo, one-command local start, and evidence in the repository for every claim.
 
-### 1.2 Non-goals for v1
+### 1.2 Non-goals
 
-- Directional trading, market making, options arbitrage, dated-futures basis trading, or statistical pairs trading.
-- Custody or possession of third-party customer money. Funds remain in each trader's own exchange account.
-- Team tenants, shared portfolios, social/copy trading, broker custody, or operator-initiated transfers.
-- Latency-sensitive co-location or high-frequency trading guarantees.
-- Automatic CEX withdrawals. CEX credentials must not have withdrawal permission.
-- Telegram or Discord trade commands. Those channels are notifications only.
-- Server-signed external on-chain capital movement; the Owner uses an external wallet after proposal approval.
-- Profit guarantees or tax/regulatory reporting beyond exportable records.
+- Real-money LIVE trading for anyone, including the operator. LIVE stays fail-closed.
+- A multi-user trading service, third-party traders, commercial launch or public app-store release.
+- Directional trading, market making, options arbitrage, dated-futures basis trading or statistical pairs trading.
+- DEX connectors and transaction signing (dYdX, Hyperliquid), treasury, rebalancing and transfer proposals (DEC-0018).
+- Telegram or Discord channels, and second-approver quorum.
+- Platform certification soaks and limited-capital pilots.
+- Custody, automatic withdrawals, latency or co-location guarantees, profit guarantees, and tax or regulatory reporting.
 
 ### 1.3 Success criteria
 
-- A qualified opportunity can be paper-traded or live-traded through the same engine and state machine.
-- A process restart, WebSocket reconnect, duplicate message, or ambiguous order response cannot create duplicate orders.
-- The engine detects and bounds unmatched exposure using configured notional and time limits.
-- PnL reconciles to venue fills, fees, funding ledgers, borrow charges, gas, and marked open positions.
-- Every configured exchange exposes current connection health, market-data age, rate-limit budget, clock drift, balances, orders, and positions.
-- An operator can understand and control the complete system from iOS or Android, including an emergency global trading halt.
+- A reviewer can open the public paper demo and see live opportunities, positions and health within five minutes. A fresh clone runs locally from the README alone (M3).
+- A qualified opportunity runs through the same engine and state machine in PAPER and SANDBOX.
+- A process restart, WebSocket reconnect, duplicate message or ambiguous order response cannot create duplicate orders.
+- The engine detects and bounds unmatched exposure using configured notional and time limits, and proves it with fault-injection tests.
+- Testnet PnL reconciles to venue fills, fees and funding ledgers, and the reconciliation report is committed (M4).
+- Every configured venue shows connection health, market-data age, rate-limit budget and clock drift.
+- The operator can understand and control the whole system from the mobile client, including an emergency global halt.
 
 ---
 
 ## 2. Users, roles, and operating model
 
-One shared deployment represents the Perpeto platform. Each trader receives one personal tenant and one independently controlled portfolio. Teams and shared tenant membership are deferred. Public market data and connector certification may be platform-scoped; all private account, credential, strategy, order, position, risk, PnL, alert and audit state is tenant-scoped.
+One deployment runs one Perpeto instance for one operator. Personal tenants, forced row-level security and tenant-scoped secrets are implemented and retained as hardening (DEC-0015). The application stays correct if more than one account exists. Serving third-party traders is not a goal.
 
 | Role | Permissions |
 |---|---|
-| Owner (Trader) | Controls their personal tenant, devices, credentials, limits, strategies, live arming, trading and audit export |
-| Platform Operator | Operates infrastructure, releases, global breakers and incident response; cannot retrieve plaintext trader credentials through product APIs |
+| Operator (Owner of the operator tenant) | Configures venues, testnet credentials, limits and strategies; controls trading modes, breakers and audit export |
+| Demo viewer | Read-only access to the seeded demo tenant: scanner, positions, portfolio, health and alerts. No mutation of any kind (DEC-0017) |
 
 Rules:
 
-- Google or Apple sign-in creates one personal tenant for a new trader. Paper mode may be publicly available without granting platform administration or live eligibility.
-- A registered device passkey is required for credential enrollment, rotation and revocation, live arming/disarming, emergency-limit increases and other high-risk tenant actions.
-- The passkey authorizes the action but is not the exchange-secret encryption key. Unattended server execution must continue while the phone is offline.
-- Platform operators use separate infrastructure identities and cannot trade as a tenant through ordinary administration paths.
-- DEC-0012 supersedes DEC-0009's interim universal-Owner registration model. Production live access is always a separate, per-tenant eligibility decision.
-- A second approver/quorum model is deferred because each initial tenant has one trader; destructive platform operations retain an operator break-glass procedure and audit trail.
+- Google or Apple sign-in authenticates the operator. The public demo uses the read-only viewer path, never open registration with Owner rights.
+- Passkey step-up guards credential enrollment, rotation and revocation, plus the other high-risk actions that are implemented. The native ceremony is optional and flag-gated.
+- Exchange credentials, used only for testnet and demo accounts, live on the server behind the `SecretStore`. The transitional AES store is acceptable for this scope, and Vault Transit is an optional backend.
+- PAPER loads no credentials at all.
 
 ### 2.1 Core user journeys
 
-1. Install the app, authenticate, create a personal tenant, register a passkey, and begin in paper mode.
-2. Connect venue accounts with read-and-trade-only credentials, verify permissions, import instruments/fees, and complete account preflight.
-3. Select paper mode, configure portfolio/risk defaults, and enable eligible strategy routes.
-4. Observe scanner results and inspect the complete yield and risk breakdown.
-5. Start a strategy manually or permit an approved strategy template to auto-enter.
-6. Monitor coordinated opening, funding capture, hedge drift, PnL, and venue health.
-7. Receive alerts and intervene, pause, or unwind when necessary.
-8. Review a rebalancing proposal and perform any CEX withdrawal or transfer externally in the exchange UI.
-9. Export audit, order, fill, funding, transfer, and PnL records.
+1. **Reviewer:** open the demo link, browse live opportunities with their full yield and risk breakdown, then follow simulated positions, PnL and venue health.
+2. **Reviewer:** clone the repositories and start everything locally in paper mode with one command.
+3. **Operator:** configure paper risk defaults and strategy routes, then watch the scanner and simulated execution on live data.
+4. **Operator:** connect testnet or demo accounts, run a full coordinated open → funding → close cycle in SANDBOX, and export the reconciliation evidence.
+5. **Operator:** receive alerts and intervene, pause or unwind, including the emergency halt.
 
 ---
 
@@ -158,8 +152,10 @@ hedged = abs(net_delta_usd) <= configured_usd_limit
 | Binance | Yes | Linear stablecoin perpetual | REST + public/private WebSocket | REST or supported trade WebSocket behind adapter | IP-allowlisted read/trade API key; withdrawals disabled | Futures/spot test environments where available, otherwise paper adapter |
 | Bybit | Yes | Linear stablecoin perpetual | V5 REST + public/private WebSocket | V5 order API/trade WebSocket behind adapter | IP-allowlisted read/trade API key; withdrawals disabled | Testnet plus paper adapter |
 | OKX | Yes | Linear stablecoin swap | V5 REST + public/private WebSocket | V5 order API/private WebSocket behind adapter | IP-allowlisted read/trade key + passphrase; withdrawals disabled | Demo trading plus paper adapter |
-| dYdX | No | Yes | Indexer REST/WebSocket plus chain verification | Signed chain/client transaction through adapter | Dedicated limited-balance trading signer | Testnet plus paper adapter |
-| Hyperliquid | No | Yes | Info API + WebSocket | Signed exchange action through adapter | Authorized API wallet/agent where supported; master wallet kept outside service | Testnet plus paper adapter |
+
+dYdX and Hyperliquid are deferred (DEC-0018). Their DEX requirements elsewhere in this specification are retained as design record only.
+
+In PAPER, every venue is read through its keyless public endpoints only (DEC-0016).
 
 The adapter advertises capabilities at runtime. Unsupported route combinations are never shown as executable. A connector is `CERTIFIED` only after its release gates in section 17 pass; otherwise it is `PAPER_ONLY` or `DISABLED`.
 
@@ -170,7 +166,6 @@ The adapter advertises capabilities at runtime. Unsupported route combinations a
 - **Positive funding:** long spot and short the perpetual.
 - **Negative funding / reverse cash-and-carry:** short borrowed spot and long the perpetual. Disabled by default and eligible only when the spot connector returns borrow availability, interest rate, utilization limits, and repayment support.
 - Spot and perpetual may be on the same CEX or different supported venues.
-- DEX perpetuals may pair with CEX spot.
 
 #### B. Perpetual–perpetual
 
@@ -477,6 +472,8 @@ The kill-switch state is durable in PostgreSQL and cached in Redis. Restarting s
 
 ## 7. Capital allocation, balancing, and compounding
 
+> Allocation (7.1) applies to paper and testnet capital. Auto-compounding (7.2) and rebalancing (7.3) are deferred (DEC-0018) and retained as design record.
+
 ### 7.1 Allocation
 
 The allocator computes deployable equity after subtracting:
@@ -553,11 +550,10 @@ flowchart LR
     Engine --> Vault
     Reconciler --> Vault
     Worker[funding-arb-worker] --> PG
-    Signer["funding-arb-signer<br/>no network"] --> Engine
     Worker --> Redis
-    Engine <-->|REST / WS / signed actions| Venues["Binance · Bybit · OKX<br/>dYdX · Hyperliquid"]
+    Engine <-->|REST / WS / signed actions| Venues["Binance · Bybit · OKX"]
     Reconciler -->|authoritative reads| Venues
-    Worker --> Notify[Push · Telegram · Discord]
+    Worker --> Notify[Push]
     API --> Obs[Metrics · Logs · Traces]
     Engine --> Obs
     Worker --> Obs
@@ -750,6 +746,8 @@ These requirements supplement, not replace, the current official venue documenta
 - Configure the correct regional REST/WebSocket domains for the client's registered entity.
 - Refresh instrument configuration and react to venue instrument updates.
 
+> dYdX and Hyperliquid below are deferred (DEC-0018) and retained as design record.
+
 #### dYdX
 
 - Use Indexer HTTP/WebSocket for market/orderbook/subaccount/fill/position/funding reads and the supported node/client transaction path for trading.
@@ -900,7 +898,7 @@ Error `details` must be redacted and safe for the caller's role.
 
 ### 10.2 Authentication and users
 
-The table includes current transitional bootstrap, approval and TOTP endpoints as well as the M4 passkey addition. Transitional role/MFA endpoints do not confer M4 live eligibility and may be retired only through a versioned compatibility change.
+The table includes the transitional bootstrap, approval and TOTP endpoints as well as the passkey endpoints, which are implemented hardening. Transitional role and MFA endpoints confer no live eligibility, and may be retired only through a versioned compatibility change.
 
 | Method/path | Purpose |
 |---|---|
@@ -1329,37 +1327,39 @@ The backend rejects CEX credentials with withdrawal capability where that can be
 
 ### 12.1 Product character
 
-The interface should feel calm, exact, and operational—not casino-like. Avoid neon gradients, confetti, price-ticker visual noise, and profit-first green/red screens. Risk and data freshness receive equal visual weight to projected yield.
+The interface should feel calm, exact, and operational—not casino-like. It shares the AgentFloor (Settle) design system: dark only, warm paper and ink neutrals, and one lime accent. Avoid neon gradients and glow, confetti, price-ticker visual noise, and profit-first green/red screens. Risk and data freshness receive equal visual weight to projected yield.
 
 The product name is written **Perpeto** in title case in normal copy. An uppercase `PERPETO` treatment is permitted only in the approved wordmark. The identity should express perpetual continuity, market-neutral balance and controlled execution without making the interface resemble a casino or implying that execution is risk-free:
 
-- Build the primary mark around a continuous perpetual loop: two interlocking rings (a mint and a sky ring) form an infinity/figure-eight that reads as the two balanced hedge legs and the recurring funding cycle. It must remain readable rather than decorative.
+- Build the primary mark as a squared perpetual loop: two interlocking square rings, woven over-under, read as the two balanced hedge legs and the recurring funding cycle. Square stroke ends follow the radius-0 system. It must remain readable rather than decorative. The mark and the outlined Space Grotesk Bold `PERPETO` wordmark are generated from code (`perpeto-mobile/scripts/render-brand.mjs`).
 - Use restrained geometry and a subtle 10–14 degree upward lean to suggest forward momentum. Do not use racing stripes, motion blur or an aggressive italic wordmark that harms legibility.
-- Design the symbol in one color first. It must remain recognizable from a 16 px status icon through a 1024 px store asset and work on both light and dark surfaces.
+- Design the symbol in one color first, using only palette colours: lime `#CBFE42` on paper `#0F0F0F` for dark surfaces, paper on a lime tile for the app icon, and ink `#F1EFE6` for monochrome icons. It must remain recognizable from a 16 px status icon through a 1024 px store asset and work on both light and dark surfaces.
 - Keep signal, execution, long and short states visually distinct, but never rely on color alone. Preserve the same label, icon and status-shape rules used by the trading interface.
 - Avoid coins, currency symbols, bull/bear mascots, rockets, lightning bolts, speedometers, shields, locks, flames, neon glow and imagery that implies guaranteed speed, yield or safety.
 - Use *The perpetual edge* as the short brand line and *Automated funding-rate arbitrage* as the plain-language descriptor. The compact app header and icon use the name or mark alone.
 
-Use an 8-point spacing grid, 12–16 px card radii, native system fonts, tabular numeric glyphs, consistent iconography, and minimum 48 × 48 dp touch targets. Phones use stacked cards and bottom sheets; tablets use constrained two-column layouts and side panels.
+Use an 8-point spacing grid, square corners on every surface (only round status dots keep a radius), Space Grotesk for interface text and Space Mono for character-by-character values (both bundled with the app, never fetched at runtime), tabular numeric glyphs, consistent iconography, and minimum 48 × 48 dp touch targets. Phones use stacked cards and bottom sheets; tablets use constrained two-column layouts and side panels.
 
-Motion reinforces state changes rather than decorating the screen. Use 120 ms feedback transitions, 180 ms standard transitions and 240 ms deliberate panel transitions with restrained ease-out curves. A signal may travel once from detection to approval to execution; persistent pulsing, looping velocity effects and animated PnL are prohibited. Order progress, leg imbalance and stale-data warnings remain readable when all motion is disabled.
+Motion reinforces state changes rather than decorating the screen. Use 160 ms feedback transitions, 200 ms standard transitions, 240 ms deliberate panel transitions and 700 ms one-shot entrances with the ease-out curve `cubic-bezier(0.2, 0.7, 0.2, 1)`. A signal may travel once from detection to approval to execution. The only permitted loop is the live status dot's 1.4 s pulse; other persistent pulsing, looping velocity effects and animated PnL are prohibited. Order progress, leg imbalance and stale-data warnings remain readable when all motion is disabled.
 
 ### 12.2 Theme tokens
 
-| Token | Light | Dark |
-|---|---|---|
-| `background` | `#F5F7FB` | `#080D18` |
-| `surface` | `#FFFFFF` | `#111827` |
-| `surface_elevated` | `#EEF2F7` | `#1B2535` |
-| `text_primary` | `#101828` | `#F8FAFC` |
-| `text_secondary` | `#475467` | `#B6C2D2` |
-| `border` | `#D0D5DD` | `#344054` |
-| `accent` | `#1E5EFF` | `#78A6FF` |
-| `signal` | `#007A70` | `#5EEAD4` |
-| `velocity` | `#6D28D9` | `#C4B5FD` |
-| `focus` | `#174EA6` | `#A8C7FA` |
+The interface ships a single dark theme.
 
-Define separate semantic tokens for positive, negative, warning, critical, informational, disabled, long, short, stale and healthy states. `signal` identifies fresh, threshold-qualified information; `velocity` supports progress and directional accents but never communicates risk or profitability. Validate WCAG 2.2 AA contrast in both themes. Profit/loss, long/short, signal qualification and health always combine color with sign, label and icon; color alone is prohibited.
+| Token | Value |
+|---|---|
+| `background` | `#0F0F0F` |
+| `surface` | `#181817` |
+| `surface_elevated` | `#252422` |
+| `text_primary` | `#F1EFE6` |
+| `text_secondary` | `#A7A59C` |
+| `border` | `rgba(245,235,235,0.10)` |
+| `accent` | `#CBFE42` |
+| `signal` | `#E9FB7F` |
+| `velocity` | `#93C449` |
+| `focus` | `#CBFE42` |
+
+Define separate semantic tokens for positive, negative, warning, critical, informational, disabled, long, short, stale and healthy states. `signal` identifies fresh, threshold-qualified information; `velocity` supports progress and directional accents but never communicates risk or profitability. Validate WCAG 2.2 AA contrast for every text, fill and status pairing. Profit/loss, long/short, signal qualification and health always combine color with sign, label and icon; color alone is prohibited.
 
 Shared components:
 
@@ -1382,11 +1382,9 @@ Shared components:
 ### 13.1 Channels
 
 - Mobile push through the Expo notification service or a direct APNs/FCM adapter selected at deployment.
-- Telegram bot to a configured private chat/channel.
-- Discord webhook to a restricted operations channel.
 - Alertmanager routes infrastructure and safety alerts through the notification worker.
 
-Telegram and Discord are outbound notification channels only. Links deep-link to authenticated mobile screens; no trading command, secret, full wallet address, or approval token appears in a message.
+Telegram and Discord channels are deferred (DEC-0018). If they are ever added, they are outbound notification channels only. Links deep-link to authenticated mobile screens; no trading command, secret, full wallet address, or approval token appears in a message.
 
 ### 13.2 Severity and events
 
@@ -1463,6 +1461,8 @@ Audit creation, decryption purpose, rotation, revocation and failures without lo
 
 ### 14.4 DEX signer isolation
 
+> Deferred with the DEX connectors (DEC-0018). Retained as design record. The `signer` binary is not extended.
+
 - Never store a master seed, general-purpose hot wallet or withdrawal-capable key on the VPS.
 - Prefer dYdX permissioned trading keys/authenticators and Hyperliquid agent/API wallets restricted to the designated account/subaccount.
 - Use one delegated key and one nonce/sequence allocator per signer process. Never share the same key among independent order writers.
@@ -1480,7 +1480,7 @@ External capital movement is never signed by this trading signer. It uses the Ow
 
 - TLS 1.2+ with modern ciphers and HSTS. Automated certificate renewal retains the gateway key/SPKI; any key replacement follows the two-pin native mobile release sequence in section 11.16.
 - Password credentials are prohibited. Google and Apple proof verification fails closed on signature, issuer, audience, expiry, state, nonce, subject, code-replay, or provider-key-refresh failure.
-- Phishing-resistant passkey step-up for credential and live-risk actions, with rotating device-bound refresh tokens, session/device revocation, challenge replay protection and an audited account-recovery policy. Existing TOTP support is transitional, not sufficient by itself for M4 credential enrollment or live arming.
+- Phishing-resistant passkey step-up for credential and live-risk actions, with rotating device-bound refresh tokens, session/device revocation, challenge replay protection and an audited account-recovery policy. Existing TOTP support is transitional, not sufficient by itself for credential enrollment or arming.
 - RBAC enforced in domain command handlers, not only HTTP middleware.
 - CSRF is not applicable to bearer-only mobile APIs, but any future cookie/web console must add origin and CSRF protections.
 - Strict request size, schema, rate and concurrency limits; generic authentication errors; lockout/risk alerts for abuse.
@@ -1539,7 +1539,7 @@ Choose region from a 24-hour probe of each enabled venue's public/private-repres
 
 ```text
 caddy                    TLS reverse proxy; only public host ports 80/443
-vault                     Transit encryption; manually unsealed 2-of-3 for initial M4 topology
+vault                     Transit encryption (optional backend); manually unsealed 2-of-3 when deployed
 funding-arb-api           Axum API and mobile WebSocket
 funding-arb-engine        Sole active execution leader
 funding-arb-reconciler    Independent venue/account reconciliation
@@ -1575,7 +1575,7 @@ Only Caddy exposes a public port. PostgreSQL, Redis, Grafana, metrics, logs, sig
 
 - One public service domain such as `api.perpeto.example`; no public infrastructure-admin endpoints.
 - Caddy terminates TLS and proxies only documented API/health routes.
-- Apply IP/rate limits to login, account creation, passkey challenges and legacy bootstrap; the legacy bootstrap endpoint remains disabled after its one-time use and is removed from the M4 live path.
+- Apply IP/rate limits to login, account creation, passkey challenges and legacy bootstrap; the legacy bootstrap endpoint remains disabled after its one-time use and is removed from the credential and arming paths.
 - Restrict egress where operationally feasible to venue domains/IP sets, KMS, object storage, push, Telegram/Discord and required package/time services. Because exchange IP ranges change, changes require monitored rollout rather than brittle silent blocking.
 - Configure DNS TTL and certificate rotation so the required native mobile build with current/backup SPKI pins reaches supported devices before infrastructure key changes.
 
@@ -1791,6 +1791,8 @@ Contract tests run against fixtures in every CI build and against supported sand
 
 ### 17.5 Release gates
 
+The gates that bind the roadmap are entry safety, idempotency, execution, reconciliation, fault tolerance, mobile and secret leakage, measured in PAPER and SANDBOX. The remaining rows (tenant isolation beyond the existing suites, signer, alert SLOs, DR, external penetration test) apply only to a real-money deployment, which is a non-goal.
+
 | Area | Required evidence |
 |---|---|
 | Tenant isolation | Cross-tenant API, repository, forced-RLS, job, cache, idempotency, event and export tests deny access/effects |
@@ -1809,6 +1811,8 @@ Contract tests run against fixtures in every CI build and against supported sand
 
 ### 17.6 Venue certification
 
+> Under DEC-0015 the roadmap does not pursue route certification. The certification ladder below (shadow windows, restricted live pilots, `PILOT`, `CERTIFIED_LIVE`) applies only if real-money LIVE were ever reconsidered, which is a non-goal. It is retained as design record. M4 testnet evidence (`CONNECTOR_EVIDENCE.md`) proves coordination, recovery and reconciliation per venue. It is not a certification.
+
 A connector-route status is one of `DISABLED`, `PAPER_ONLY`, `SHADOW`, `PILOT`, or `CERTIFIED_LIVE`.
 
 Certification requires:
@@ -1822,7 +1826,7 @@ Certification requires:
 
 Certify one venue pair/strategy route at a time. One certified connector does not automatically certify every pair, asset, account mode or strategy direction.
 
-Platform certification applies to connector code and a specific venue/route; it is not repeated from scratch for every trader. A personal tenant enables only platform-certified routes for which its connected account separately passes permission, account-mode, private-stream, reconciliation and shadow preflight, then receives explicit live eligibility and passkey-authorized arming. The M4 release floor is at least one `PILOT` BTC or ETH route on a certified Binance, Bybit or OKX connector for a controlled cohort. `CERTIFIED_LIVE` and broader rollout begin only in M7 after M6 hardening evidence is accepted. DEX certification belongs to M5.
+Platform certification applies to connector code and a specific venue/route; it is not repeated from scratch for every trader. A personal tenant enables only platform-certified routes for which its connected account separately passes permission, account-mode, private-stream, reconciliation and shadow preflight, then receives explicit live eligibility and passkey-authorized arming. 
 
 ---
 
@@ -1865,73 +1869,53 @@ Never canary two live execution engines against the same account. Rollback resto
 
 ## 19. Delivery phases
 
-### Phase 0 — Product, eligibility, and threat model
+The roadmap is re-baselined by DEC-0015. `MILESTONE.md` is the status of record. Every exit gate must be achievable by one maintainer without real capital.
 
-- Complete trademark, domain, app-store and social-handle clearance for **Perpeto**; finalize the perpetual-loop brand assets, ownership, legal/risk disclosures and design identity.
-- Confirm client jurisdictions, venue account eligibility/terms, subaccounts, margin modes, key permissions and assets/networks.
-- Approve risk limits, incident contacts, transfer policy and venue rollout order.
+### M1 — Foundations (done)
 
-### Phase 1 — Foundations and simulator
+- Rust workspace, domain types and state machines, PostgreSQL, social auth and sessions, MFA, audit and outbox.
+- Deterministic market simulator and replay, scanner, opportunity and risk engine, strategies, coordinated paper lifecycle, monitoring.
+- Expo client with the five-tab shell, shared component library and generated API client. CI and documentation automation.
+- Implemented hardening: personal tenants, forced RLS, passkeys, Vault Transit store, credential lifecycle, preflight, pilot gate and hash-chained audit.
 
-- Rust workspace, domain types/state machines, PostgreSQL/Redis, auth/RBAC/MFA, audit/outbox and observability.
-- Market/order/account simulator, deterministic replay, ledger and PnL.
-- Expo shell, auth/onboarding, theme/accessibility primitives and generated API client.
+### M2 — Live-data paper trading (next)
 
-### Phase 2 — Market data, scanner, and paper trading
+- PAPER reads keyless public instruments, funding, mark and index prices, and order books from Binance, Bybit and OKX through the existing connectors (DEC-0016).
+- Paper fills are simulated against live books on wall-clock time. Stale feeds block entries on the affected legs and are visible in the client.
+- Fixture replay stays selectable and drives the deterministic test suite.
 
-- Instrument normalization, books, funding history/live estimates and fee schedules.
-- Transparent predictor, opportunity/capacity/risk engine and scanner UI.
-- Coordinated paper execution, partial-fill/failure injection and full mobile execution/position views.
+### M3 — Public demo
 
-### Phase 3 — CEX connectors
+- Staging deploys from `main` in PAPER with live data.
+- A read-only demo viewer into a seeded demo tenant, with authorization tests proving every mutation is rejected (DEC-0017).
+- A hosted web build of the Expo client plus a TestFlight build.
+- A README "5-minute tour", an architecture diagram, and a one-command local `docker compose up`.
 
-- Binance, Bybit and OKX adapters with sandbox, account, order, private stream, reconciliation and fee/funding ledgers.
-- Venue onboarding/health, strategy automation, analytics and notifications.
-- Certify connector behavior individually through contract, sandbox and read-only shadow stages; production account pilots begin only after M4 tenant and credential controls pass.
+### M4 — Testnet execution
 
-### Phase 4 — Shared-VPS multi-user CEX pilot
+- SANDBOX on the operator's own Bybit testnet, Binance testnet and OKX demo accounts through the existing durable coordinator.
+- Per venue: one full open → funding → close cycle and one forced partial-fill or timeout recovery, each reconciled.
+- Evidence (orders, fills, funding, reconciliation report) committed under `docs/evidence/`.
 
-- Add personal tenants, tenant-scoped repositories and forced PostgreSQL row-level security across all private data/effects.
-- Add platform passkeys, Vault Transit per-tenant credentials, audited enrollment/rotation/revocation and 2-of-3 manual unseal/recovery.
-- Separate platform connector certification from per-account preflight, eligibility and explicit live arming; run a limited `PILOT` CEX cohort.
+### Deferred (DEC-0018)
 
-### Phase 5 — DEX connectors and signer
-
-- dYdX indexer/node connector and permissioned signer.
-- Hyperliquid info/WebSocket/exchange connector and agent wallet signer.
-- Chain/indexer/nonce failure handling, DEX gas/fee accounting and external-wallet transfer tracking.
-
-### Phase 6 — Treasury, production operations, and hardening
-
-- Allocation, compounding, internal rebalancing and approval-bound external proposals.
-- Complete deployment automation, backups/DR, security review, penetration test, runbooks and SLO dashboards.
-- iOS/Android store/internal distribution release, certificate pins, push and incident flows.
-
-### Phase 7 — Certified-live rollout
-
-- Promote eligible M4 pilot routes to `CERTIFIED_LIVE` only after M6 evidence is accepted, then broaden venue-by-venue availability and capital gradually.
-- Increase capital by no more than 2× in any seven-day period.
-- Enable auto-compounding only after at least 30 incident-free live days and Owner approval.
-
-Any unexplained order, position, transfer, signer or accounting discrepancy returns the affected route to the previous rollout phase.
+DEX connectors and signer, treasury, rebalancing and compounding, Telegram/Discord, platform certification soaks, limited-capital pilots, Vault HA and auto-unseal, and any real-money LIVE rollout.
 
 ---
 
 ## 20. Definition of done
 
-The v1 system is complete only when:
+The reference implementation is complete when:
 
-- the enabled connector routes meet their milestone-specific platform certification floor and every live tenant/account has explicit preflight, eligibility and arm evidence;
-- tenant authorization, forced RLS, tenant-scoped background work, passkeys and per-tenant Vault credential lifecycle pass the M4 security and recovery gates;
-- spot–perpetual and perpetual–perpetual strategies execute through one durable state machine;
-- funding ranking uses actual fees and conservative executable costs;
-- partial fills, unknown outcomes and restarts cannot duplicate orders or leave silent exposure;
-- risk, kill switch, approval and reconciliation rules pass fault-injection tests;
-- mobile pages/settings in this specification work on supported iOS/Android devices in light/dark modes and pass accessibility review;
-- secrets/signers, deployment, monitoring, backups, alerts, runbooks and DR satisfy release gates;
-- paper, shadow and restricted-live evidence is signed off by the Owner;
-- API, database, configuration, operational and user documentation are delivered;
-- no Critical/High security issue or unexplained accounting discrepancy remains open.
+- M1–M4 exit evidence in `MILESTONE.md` is met and committed;
+- spot–perpetual and perpetual–perpetual routes run through one durable state machine in PAPER and SANDBOX;
+- ranking uses actual or conservatively configured fees and executable costs from live books;
+- partial fills, unknown outcomes and restarts cannot duplicate orders or leave silent exposure, proven by fault-injection tests;
+- risk, kill-switch and reconciliation rules pass their tests;
+- the public demo is reachable, read-only, and shows data freshness;
+- the mobile client passes its lint, typecheck, tests and accessibility checks in the dark theme;
+- API, database, configuration and operating documentation match the running system;
+- LIVE remains fail-closed, and no Critical or High security issue or unexplained accounting discrepancy is open.
 
 ---
 
@@ -1939,21 +1923,20 @@ The v1 system is complete only when:
 
 - Cross-venue orders cannot be atomic or guaranteed to fill simultaneously.
 - An acknowledgement is not a fill and may not prove whether an order exists.
-- Current/next funding is indicative until the venue finalizes settlement.
+- Current and next funding are indicative until the venue finalizes settlement.
 - Funding intervals, formulas, caps, filters, risk parameters, fee tiers and API limits can change dynamically.
 - Maker fees apply only to orders actually filled as maker.
-- Annualizing one unusual interval can be misleading; UI always shows horizon and source data.
-- Funding income can be overwhelmed by basis movement, slippage, fees, borrow, liquidation, stablecoin depeg or venue/protocol failure.
+- Annualizing one unusual interval can be misleading, so the UI always shows the horizon and source data.
+- Funding income can be overwhelmed by basis movement, slippage, fees, borrow, liquidation, stablecoin depeg or venue failure.
 - Negative-funding spot–perpetual routes require reliable borrow support and are disabled by default.
-- All venues do not list identical instruments, collateral or account modes.
-- Indexers may lag chain truth; adapters reconcile authoritative state before retrying.
-- CEX withdrawal-disabled credentials conflict with fully automatic cross-exchange transfers by design. The platform proposes and tracks external movement but does not bypass approval/custody controls.
-- Dedicated accounts/subaccounts are required for reliable automated ownership and reconciliation.
-- The first multi-user production topology accepts one VPS as a shared host failure and compromise domain. RLS and Vault reduce application-layer exposure but do not eliminate a malicious root operator or full host compromise; M6 owns stronger infrastructure isolation and availability.
-- A passkey authorizes credential and live-risk actions but cannot be the persistent server decryption root because automation must continue while the trader's phone is offline.
+- Venues do not all list identical instruments, collateral or account modes.
+- Paper fills simulated against live books ignore queue position and market impact beyond visible depth. Paper results are an optimistic bound, not a forecast.
+- Testnet and demo venues have thin, unrealistic books and can differ from production behaviour. M4 evidence proves coordination and recovery, not profitability.
+- The single-VPS topology is one shared failure and compromise domain. RLS and the secret store reduce application-layer exposure only.
+- A passkey authorizes sensitive actions but cannot be the persistent server decryption root, because automation must continue while the phone is offline.
 - Funding prediction is probabilistic and cannot guarantee a payment.
-- V1 supports stablecoin-settled linear perpetuals. Inverse contracts and dated futures require separate implementation/certification.
-- **Perpeto** remains a working public name until trademark, domain, app-store and social-handle clearance is complete; venue eligibility and regulatory review also remain pre-launch business decisions.
+- Only stablecoin-settled linear perpetuals are supported. Inverse contracts and dated futures are out of scope.
+- **Perpeto** is a project name, not a cleared commercial brand. No commercial launch is planned.
 
 ---
 
