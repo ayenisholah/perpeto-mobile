@@ -1,18 +1,17 @@
 # Product Milestones
 
-<!-- SHARED-CONTENT-VERSION: 6 -->
+<!-- SHARED-CONTENT-VERSION: 9 -->
+
+DEC-0015 re-baselined the roadmap on 2026-11-22. Perpeto is a public reference implementation, so every exit gate must be achievable by one maintainer, without real capital and without elapsed-time soaks of weeks. The earlier M0–M7 plan is kept in git history and summarized in DEC-0015.
 
 | ID | Milestone | Exit evidence | Status |
 |---|---|---|---|
-| M0 | Governance and scaffolding | Two repositories, protected workflow design, synchronized documents, executable scaffolds, contract seed, CI and paper staging automation | Implementation complete; `0.1.0` publication evidence pending |
-| M1 | Foundations and simulator | Durable domain, auth, audit, deterministic simulator, ledger, Expo shell and generated client | In progress (M1A social-auth contract/domain) |
-| M2 | Scanner and paper trading | Normalized markets, forecasts, opportunity/risk engine, coordinated paper lifecycle and complete mobile monitoring | Feature implementation complete; exit gates reopened (exact-decimal wire/persistence, current backend CI, and dependent M1 evidence pending) |
-| M3 | CEX connector certification | Binance, Bybit and OKX contract suites, reconciliation, sandbox writes, read-only shadow operation, and platform-level staged certification evidence | In progress (primary public/private WebSocket and sequence-recovery code implemented locally; linked build, credentialed probes, and timed certification evidence pending) |
-| M4 | Shared-VPS multi-user CEX pilot | Personal tenants, PostgreSQL RLS, passkeys, Vault Transit credentials, account preflight, tenant risk isolation, and a controlled `PILOT` cohort | In progress (session-derived tenant identity and the first forced-RLS/private-runtime isolation slice implemented locally; database verification, passkeys, Vault, preflight, and pilot gates pending) |
-| M5 | DEX integrations | dYdX, Hyperliquid, isolated signer, nonce/chain recovery and approval flows | Not started |
-| M6 | Operational hardening | Fault injection, DR, runbooks, SLOs, accessibility, security review, and shared-VPS blast-radius reduction | Not started |
-| M7 | Certified-live rollout | `CERTIFIED_LIVE` approval and venue-by-venue rollout evidence beyond the limited M4 cohort after M6 hardening | Not started |
+| M1 | Foundations: Rust workspace, social auth and sessions, deterministic paper engine, scanner, risk, strategies, monitoring, mobile app, CI and docs automation | Workspace passes fmt, Clippy (`-D warnings`), all migrations and the full test suite (136 tests). The 11 database-backed suites pass under the non-`BYPASSRLS` runtime role. Mobile lint, typecheck and tests pass | **Done** (closed 2026-11-22 on the verified 2026-07-29 baseline) |
+| M2 | Live-data paper trading: PAPER reads keyless public funding and order books from Binance, Bybit and OKX through the existing connectors, simulates fills against live books, and runs on wall-clock time | The engine runs 24 hours on staging with no crash and no unreported stale feed. The scanner lists live routes with freshness. Fixture mode still drives the deterministic tests | **Done** (closed 2026-11-25: [probe](evidence/m2/PUBLIC_PROBE.md), [24-hour run](evidence/m2/STAGING_SOAK.md)) |
+| M3 | Public demo, all of the following: staging tracks `main`; a read-only demo viewer (DEC-0017); the Next.js web platform at `app.perpeto.xyz` serving the demo (DEC-0021); a "5-minute tour" in the README; one-command local `docker compose up`. The TestFlight build is deferred while EAS delivery is paused. Web Google/Apple sign-in is implemented and switched off until the provider origins are configured | A reviewer reaches the live demo from the README without help, and a fresh clone runs locally from the README alone | **Done** (closed 2026-11-25: [evidence](evidence/m3/PUBLIC_DEMO.md)) |
+| M4 | Testnet execution with the operator's own Bybit testnet, Binance testnet and OKX demo accounts, through the existing sandbox coordinator | Per venue: one open → funding → close cycle, plus one forced partial-fill or timeout recovery. The reconciliation report is committed under `docs/evidence/` | **Next** |
+| — | Multi-tenant hardening: personal tenants, forced RLS, passkeys, Vault Transit store, credential lifecycle, preflight, pilot gate, audit chain | The existing database-verified suites | **Implemented and kept; not a release gate.** Deploying Vault infrastructure and the native passkey ceremony are optional extras |
 
-No milestone closes from code completion alone. Its traceability, tests, security evidence, documentation, and backend/mobile compatibility must also pass.
+No milestone closes from code alone. Its tests, documentation and backend/mobile compatibility must also pass, and its evidence must be in the repository.
 
-The shared deployment is not authorized for live trading merely because registration is available. DEC-0012 supersedes the interim universal-Owner model in DEC-0009: each authenticated trader receives one personal tenant, sensitive credential and live-mode actions require passkey authorization, and eligibility is enforced per tenant. M4 must prove tenant isolation and credential controls before any production CEX order is submitted.
+LIVE is permanently fail-closed. No milestone in this roadmap authorizes a production exchange order.

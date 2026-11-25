@@ -2,12 +2,12 @@
 
 ## Snapshot
 
-- **Roadmap:** re-baselined by DEC-0015 on 2026-11-22.
-- **Milestone:** M1 done. M2, live-data paper trading, is next on the backend. The mobile M3 work (hosted web demo, viewer UX) follows.
-- **CI:** Mobile CI and iOS TestFlight were green on `main` at `2a52154` (2026-07-30).
-- **Delivery:** EAS delivery is paused (`EAS_TESTFLIGHT_ENABLED=false`, 2026-11-22). Resuming it is part of M3.
-- **Drift check:** the scheduled Shared Document Drift check has failed daily since at least 2026-09-24, because backend shared documents were ahead of the mobile copies. The backend re-baseline sync should clear it.
-- **Last local verification:** 2026-11-22, on the design-system branch: lint, typecheck and 80 tests pass.
+- **Roadmap:** re-baselined by DEC-0015 on 2026-11-22. M1, M2 and M3 are done (M2 and M3 closed 2026-11-25); M4, testnet execution, is next.
+- **Platforms:** this repository is the iOS client. The web platform, including the public live demo at `https://app.perpeto.xyz`, is the Next.js app in `perpeto-web` (DEC-0021).
+- **Delivery:** EAS and TestFlight delivery stay paused (`EAS_TESTFLIGHT_ENABLED=false`) by choice; M3 closed without a TestFlight build.
+- **API client:** vendored `@ayenisholah/perpeto-api-client@0.24.0`. The registry holds `0.25.0`, which adds only web sign-in types.
+- **Shared documents:** synced by hand from backend `main` at `6ec1cf0` (version 9) on 2026-11-25. The automatic sync's cross-repository token has expired.
+- **Last local verification:** 2026-11-24: lint, typecheck, 224 tests, `audit:deps` and `expo-doctor` pass.
 
 ## M1 — Foundations (done)
 
@@ -29,12 +29,12 @@ The following surfaces sit behind `EXPO_PUBLIC_PASSKEYS_ENABLED` and `EXPO_PUBLI
 
 ## Open items by milestone
 
-- **M2:** freshness and stale-feed presentation for live public data.
-- **M3:** hosted web build; demo-viewer entry, badge and read-only enforcement; resuming EAS delivery and confirming TestFlight tester availability; the accessibility pass.
+- **M2 (done):** live public data flows through the existing freshness, feed-status and blocked-entry surfaces (client 0.23.0 fields).
+- **M3 (done):** the read-only interface for the demo principal and Viewer-only accounts (`useIsDemo`, `useIsReadOnly`, the shell badge, hidden alert-acknowledgement and account controls). The hosted demo itself is served by `perpeto-web`.
 - **M4:** verify Exchanges against testnet and demo accounts and capture evidence screenshots.
 
 ## Next tasks
 
-1. After the backend re-baseline merges, merge the shared-document sync and confirm the drift check is green.
-2. M2: wire live-data freshness into the scanner, opportunity detail, Home and Health.
-3. M3: build the demo-viewer mode and the hosted web export.
+1. M4: exercise the Exchanges surface against the operator's testnet and demo accounts and record the evidence.
+2. Renew the cross-repository token so shared-document sync and API updates run automatically again.
+3. Resume EAS delivery when a TestFlight build is wanted.
